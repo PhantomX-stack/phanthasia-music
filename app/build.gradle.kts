@@ -1,45 +1,28 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.hilt.android)
-    alias(libs.plugins.ksp)
 }
 
 android {
-    namespace  = "com.phantasia.music"
+    namespace = "com.phantasia.music"
     compileSdk = 35
 
     defaultConfig {
         applicationId = "com.phantasia.music"
-        minSdk        = 26
-        targetSdk     = 35
-        versionCode   = 1
-        versionName   = "1.0.0"
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile     = file(System.getenv("KEYSTORE_PATH")     ?: "placeholder.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")      ?: ""
-            keyAlias      = System.getenv("KEY_ALIAS")              ?: ""
-            keyPassword   = System.getenv("KEY_PASSWORD")           ?: ""
-        }
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0.0"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled   = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
-            isMinifyEnabled     = false
             applicationIdSuffix = ".debug"
+            isMinifyEnabled = false
         }
     }
 
@@ -62,28 +45,4 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
-    implementation(libs.hilt.navigation.compose)
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
-    implementation(libs.sqlcipher)
-    implementation(libs.media3.exoplayer)
-    implementation(libs.media3.exoplayer.dash)
-    implementation(libs.media3.session)
-    implementation(libs.media3.ui)
-    implementation(libs.media3.datasource.cache)
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.serialization.json)
-    implementation(libs.ktor.client.logging)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.coil.compose)
-    implementation(libs.palette)
-    implementation(libs.security.crypto)
-    implementation(libs.work.runtime.ktx)
 }
