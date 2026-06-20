@@ -1,0 +1,28 @@
+# Build outputs
+/build
+**/build/
+**/.gradle/
+
+# Kotlin
+.kotlin/
+*.class
+
+# Android
+*.apk
+*.ap_
+*.aab
+local.properties
+/captures
+
+# Signing — NEVER commit keystore or secrets
+*.jks
+*.keystore
+signing/keystore.properties
+.env
+secrets.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
