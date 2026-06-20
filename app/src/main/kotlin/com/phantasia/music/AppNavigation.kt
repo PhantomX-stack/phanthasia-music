@@ -1,0 +1,39 @@
+package com.phantasia.music
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.phantasia.music.ui.HomeScreen
+import com.phantasia.music.ui.LibraryScreen
+import com.phantasia.music.ui.PlayerScreen
+import com.phantasia.music.ui.SearchScreen
+
+sealed class Route(val path: String) {
+    object Home    : Route("home")
+    object Search  : Route("search")
+    object Library : Route("library")
+    object Player  : Route("player/{videoId}") {
+        fun build(videoId: String) = "player/$videoId"
+    }
+}
+
+@Composable
+fun AppNavigation(innerPadding: PaddingValues) {
+    val nav = rememberNavController()
+    NavHost(navController = nav, startDestination = Route.Home.path) {
+        composable(Route.Home.path)    { HomeScreen(nav, innerPadding) }
+        composable(Route.Search.path)  { SearchScreen(nav, innerPadding) }
+        composable(Route.Library.path) { LibraryScreen(nav, innerPadding) }
+        composable(
+            route     = Route.Player.path,
+            arguments = listOf(navArgument("videoId") { type = NavType.StringType })
+        ) { back ->
+            val videoId = back.arguments?.getString("videoId") ?: return@composable
+            PlayerScreen(videoId, nav, innerPadding)
+        }
+    }
+}
