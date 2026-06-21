@@ -14,3 +14,6 @@ local.properties
 *.iml
 .DS_Store
 README.md
+secrets.properties
+.env.local
+app/src/main/kotlin/com/phantasia/music/network/InnerTubeClient.kt
