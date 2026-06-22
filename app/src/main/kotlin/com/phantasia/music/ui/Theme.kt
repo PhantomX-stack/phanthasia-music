@@ -15,40 +15,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFCFBCFF),
-    onPrimary = Color(0xFF381E72),
-    primaryContainer = Color(0xFF4F378A),
-    background = Color(0xFF1C1B1F),
-    surface = Color(0xFF1C1B1F)
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF6650A4),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFEADDFF),
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE)
-)
-
-private val Typography = Typography(
-    bodyLarge = TextStyle(fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp),
-    titleLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp)
-)
+private val Dark = darkColorScheme(primary=Color(0xFFCFBCFF), onPrimary=Color(0xFF381E72),
+    primaryContainer=Color(0xFF4F378A), background=Color(0xFF1C1B1F), surface=Color(0xFF1C1B1F))
+private val Light = lightColorScheme(primary=Color(0xFF6650A4), onPrimary=Color(0xFFFFFFFF),
+    primaryContainer=Color(0xFFEADDFF), background=Color(0xFFFFFBFE), surface=Color(0xFFFFFBFE))
+private val Type = Typography(
+    bodyLarge=TextStyle(fontWeight=FontWeight.Normal,   fontSize=16.sp, lineHeight=24.sp),
+    titleMedium=TextStyle(fontWeight=FontWeight.Medium, fontSize=16.sp, lineHeight=24.sp),
+    titleLarge=TextStyle(fontWeight=FontWeight.SemiBold,fontSize=22.sp, lineHeight=28.sp),
+    labelSmall=TextStyle(fontWeight=FontWeight.Medium,  fontSize=11.sp, lineHeight=16.sp))
 
 @Composable
-fun PhantasiaTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else if (darkTheme) DarkColorScheme else LightColorScheme
-
+fun PhantasiaTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val cs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val ctx = LocalContext.current; if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
+    } else if (dark) Dark else Light
     val view = LocalView.current
     if (!view.isInEditMode) SideEffect {
-        val window = (view.context as Activity).window
-        window.statusBarColor = colorScheme.background.toArgb()
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+        val w = (view.context as Activity).window; w.statusBarColor = cs.background.toArgb()
+        WindowCompat.getInsetsController(w, view).isAppearanceLightStatusBars = !dark
     }
-
-    MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+    MaterialTheme(colorScheme = cs, typography = Type, content = content)
 }

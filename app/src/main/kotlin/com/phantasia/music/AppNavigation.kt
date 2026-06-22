@@ -16,30 +16,24 @@ sealed class Route(val path: String) {
     object Home    : Route("home")
     object Search  : Route("search")
     object Library : Route("library")
-    object Player  : Route("player/{itemId}") {
-        fun create(itemId: String) = "player/$itemId"
+    object Player  : Route("player/{videoId}") {
+        fun build(id: String) = "player/$id"
     }
 }
 
 @Composable
 fun AppNavigation(innerPadding: PaddingValues) {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Route.Home.path) {
-        composable(Route.Home.path) {
-            HomeScreen(onNavigate = navController::navigate, padding = innerPadding)
-        }
-        composable(Route.Search.path) {
-            SearchScreen(onNavigate = navController::navigate, padding = innerPadding)
-        }
-        composable(Route.Library.path) {
-            LibraryScreen(onNavigate = navController::navigate, padding = innerPadding)
-        }
+    val nav = rememberNavController()
+    NavHost(navController = nav, startDestination = Route.Home.path) {
+        composable(Route.Home.path)    { HomeScreen(nav, innerPadding) }
+        composable(Route.Search.path)  { SearchScreen(nav, innerPadding) }
+        composable(Route.Library.path) { LibraryScreen(nav, innerPadding) }
         composable(
-            route = Route.Player.path,
-            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
-            PlayerScreen(itemId = itemId, padding = innerPadding)
+            route     = Route.Player.path,
+            arguments = listOf(navArgument("videoId") { type = NavType.StringType })
+        ) { back ->
+            val videoId = back.arguments?.getString("videoId") ?: return@composable
+            PlayerScreen(videoId, nav, innerPadding)
         }
     }
 }

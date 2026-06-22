@@ -1,25 +1,14 @@
 # Phantasia Music
+Offline-first M3 music streaming — InnerTube powered.
 
-A simplified Android Compose app with a flat, easy-to-navigate source layout.
-
-## Structure
+## Layers
 ```
-app/
-  src/main/
-    kotlin/com/phantasia/music/
-      AppNavigation.kt
-      AppScreens.kt
-      Data.kt
-      MainActivity.kt
-      Theme.kt
-    res/
-      values/themes.xml
-      xml/network_security_config.xml
-    AndroidManifest.xml
-  build.gradle.kts
-build.gradle.kts
-libs.versions.toml
-settings.gradle.kts
+app/src/main/kotlin/com/phantasia/music/
+  network/   InnerTube client, cipher, parsers, models, repo
+  storage/   SQLCipher Room DB + 2 GB LRU cache
+  player/    Media3 ExoPlayer service + queue
+  security/  AES-256-GCM keystore + SSL pinning + root detection
+  ui/        M3 Compose screens + MVI states + dynamic canvas
 ```
 
 ## Build
