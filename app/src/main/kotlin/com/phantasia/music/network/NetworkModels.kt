@@ -11,6 +11,18 @@ data class TrackModel(
 )
 
 @Serializable
+data class StreamDataModel(
+    val videoId: String,
+    val streamUrl: String,
+    val itag: Int,
+    val mimeType: String,
+    val bitrate: Long = 0L,
+    val contentLength: Long = 0L,
+    val expiresInSeconds: Long = 0L,
+    val audioQuality: String = ""
+)
+
+@Serializable
 data class AlbumModel(
     val browseId: String, val title: String, val year: String,
     val thumbnailUrl: String, val artistName: String = "",
