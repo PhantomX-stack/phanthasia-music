@@ -1,5 +1,6 @@
 package com.phantasia.music.network
 
+import com.phantasia.music.BuildConfig
 import com.phantasia.music.security.EnvironmentGuard
 import dagger.Module
 import dagger.Provides
@@ -24,7 +25,7 @@ import javax.inject.Qualifier
 import javax.inject.Singleton
 
 internal object IT {
-    const val KEY    = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+    val KEY          = BuildConfig.INNERTUBE_API_KEY
     const val NAME   = "ANDROID_MUSIC"
     const val VER    = "6.45.52"
     const val SDK    = 34
@@ -65,14 +66,17 @@ object NetworkModule {
             .retryOnConnectionFailure(true)
             .addInterceptor(guard.sslPinningInterceptor())
             .addInterceptor { chain ->
-                chain.proceed(chain.request().newBuilder()
+                val request = chain.request().newBuilder()
                     .header("User-Agent",                IT.UA)
                     .header("Content-Type",              "application/json")
-                    .header("X-Goog-Api-Key",            IT.KEY)
                     .header("X-Goog-Api-Format-Version", "2")
                     .header("Origin",                    "https://music.youtube.com")
                     .header("Referer",                   "https://music.youtube.com/")
-                    .build())
+                    .apply {
+                        if (IT.KEY.isNotBlank()) header("X-Goog-Api-Key", IT.KEY)
+                    }
+                    .build()
+                chain.proceed(request)
             }.build()
 
     @Provides @Singleton

@@ -8,6 +8,11 @@ This report treats the referenced Google API key as potentially exposed credenti
 
 ### Findings
 
+1. **A Google API key was hard-coded in the client networking layer.**
+   Repository inspection found that the Kotlin networking configuration previously stored a Google-style API key directly in `InnerTubeClient.kt` as a constant and attached that value to outgoing API requests via the `X-Goog-Api-Key` header.
+
+2. **The same key appeared in stale project-generation scripts.**
+   The same literal also existed in generator artifacts, which meant removing it from the Kotlin source alone would not eliminate source-level exposure from auxiliary files; those stale Python generator scripts have now been removed from this branch.
 1. **A Google API key is hard-coded in the client networking layer.**
    The current Kotlin networking configuration stores a Google-style API key directly in `InnerTubeClient.kt` as a constant and later attaches that value to outgoing API requests via the `X-Goog-Api-Key` header.
 

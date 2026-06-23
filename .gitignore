@@ -1,17 +1,44 @@
+# Build outputs
 /build
 **/build/
 **/.gradle/
 .kotlin/
-__pycache__/
-*.pyc
 *.class
 *.apk
 *.aab
+
+# Local Android/Gradle configuration and generated files
 local.properties
-*.jks
-*.keystore
-.env
 .idea/
 *.iml
 .DS_Store
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+secrets.properties
+secret.properties
+credentials.properties
+keystore.properties
+signing.properties
+
+# Signing keys and certificates
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+
+# Cloud/Firebase/Google credentials that can expose API keys or service accounts
+google-services.json
+service-account*.json
+*-service-account.json
+firebase-adminsdk*.json
+
+# Python caches and legacy generator scripts
+__pycache__/
+*.pyc
+go.py
 phantasia_master.py

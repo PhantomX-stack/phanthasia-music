@@ -1,3 +1,16 @@
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.isFile) file.inputStream().use(::load)
+}
+
+fun secret(name: String): String =
+    providers.environmentVariable(name).orNull ?: localProperties.getProperty(name).orEmpty()
+
+fun String.asBuildConfigString(): String =
+    "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,6 +30,7 @@ android {
         targetSdk     = 35
         versionCode   = 1
         versionName   = "1.0.0"
+        buildConfigField("String", "INNERTUBE_API_KEY", secret("INNERTUBE_API_KEY").asBuildConfigString())
     }
 
     signingConfigs {
@@ -41,7 +55,10 @@ android {
         debug { isMinifyEnabled = false; applicationIdSuffix = ".debug" }
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
