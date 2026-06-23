@@ -13,6 +13,11 @@ This report treats the referenced Google API key as potentially exposed credenti
 
 2. **The same key appeared in stale project-generation scripts.**
    The same literal also existed in generator artifacts, which meant removing it from the Kotlin source alone would not eliminate source-level exposure from auxiliary files; those stale Python generator scripts have now been removed from this branch.
+1. **A Google API key is hard-coded in the client networking layer.**
+   The current Kotlin networking configuration stores a Google-style API key directly in `InnerTubeClient.kt` as a constant and later attaches that value to outgoing API requests via the `X-Goog-Api-Key` header.
+
+2. **The same key appears in a project-generation script.**
+   The key also exists inside `go.py`, which means removing it from the Kotlin source alone would not eliminate exposure from the repository history or auxiliary files.
 
 3. **Mobile API keys should be treated as exposed once shipped.**
    Any key embedded in an Android client can be extracted from source, APK artifacts, logs, backups, decompilation, memory inspection, or build scripts. Even if an API key is not equivalent to a user password, it can still create quota abuse, attribution, billing, or service-blocking risk.
@@ -22,10 +27,6 @@ This report treats the referenced Google API key as potentially exposed credenti
 
 5. **No evidence of exploitation was verified.**
    Because this assessment intentionally avoids direct key validation or API probing, there is no confirmed proof here that the key has been abused. The presence of the key in source-controlled files is still sufficient to classify it as exposed.
-
-### Current Remediation Status
-
-The key is no longer stored as a literal in the active Kotlin networking client, and stale Python generator scripts have been removed. The app now reads `INNERTUBE_API_KEY` from the build environment or ignored `local.properties`, and omits the `X-Goog-Api-Key` header when no key is configured. This reduces future source exposure, but it does **not** undo the prior exposure: the old key should still be considered compromised and rotated or revoked.
 
 ### Recommended Immediate Mitigation
 
