@@ -11,6 +11,7 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import com.phantasia.music.BuildConfig
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.ContentType
@@ -25,7 +26,7 @@ import javax.inject.Qualifier
 import javax.inject.Singleton
 
 internal object IT {
-    val KEY          = BuildConfig.INNERTUBE_API_KEY
+    val KEY = BuildConfig.INNERTUBE_API_KEY
     const val NAME   = "ANDROID_MUSIC"
     const val VER    = "6.45.52"
     const val SDK    = 34
