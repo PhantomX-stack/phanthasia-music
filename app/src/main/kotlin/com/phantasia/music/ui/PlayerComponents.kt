@@ -80,7 +80,7 @@ fun MiniPlayerBar(
                 else onEvent(PlayerUiEvent.Play)
             }) {
                 Icon(
-                    imageVector  = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    imageVector  = if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     contentDescription = null,
                     tint         = MaterialTheme.colorScheme.onSurface
                 )
@@ -88,7 +88,7 @@ fun MiniPlayerBar(
 
             // Next
             IconButton(onClick = { onEvent(PlayerUiEvent.SkipNext) }) {
-                Icon(Icons.Default.SkipNext, contentDescription = "Next",
+                Icon(Icons.Filled.SkipNext, contentDescription = "Next",
                     tint = MaterialTheme.colorScheme.onSurface)
             }
         }

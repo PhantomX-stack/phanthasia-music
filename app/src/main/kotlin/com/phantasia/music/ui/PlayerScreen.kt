@@ -189,7 +189,7 @@ private fun PlayerUI(
                     // Shuffle
                     IconButton(onClick = { onEvent(PlayerUiEvent.ToggleShuffle) }) {
                         Icon(
-                            Icons.Default.Shuffle,
+                            Icons.Filled.Shuffle,
                             contentDescription = "Shuffle",
                             tint     = if (state.shuffleEnabled) MaterialTheme.colorScheme.primary
                                        else Color.White.copy(alpha = 0.6f),
@@ -202,7 +202,7 @@ private fun PlayerUI(
                         onClick  = { onEvent(PlayerUiEvent.SkipPrev) },
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Icon(Icons.Default.SkipPrevious, contentDescription = "Previous",
+                        Icon(Icons.Filled.SkipPrevious, contentDescription = "Previous",
                             tint = Color.White, modifier = Modifier.size(36.dp))
                     }
 
@@ -221,8 +221,8 @@ private fun PlayerUI(
                             }
                         ) {
                             Icon(
-                                imageVector  = if (state.isPlaying) Icons.Default.Pause
-                                               else Icons.Default.PlayArrow,
+                                imageVector  = if (state.isPlaying) Icons.Filled.Pause
+                                               else Icons.Filled.PlayArrow,
                                 contentDescription = if (state.isPlaying) "Pause" else "Play",
                                 tint     = Color.Black,
                                 modifier = Modifier.size(36.dp)
@@ -235,7 +235,7 @@ private fun PlayerUI(
                         onClick  = { onEvent(PlayerUiEvent.SkipNext) },
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Icon(Icons.Default.SkipNext, contentDescription = "Next",
+                        Icon(Icons.Filled.SkipNext, contentDescription = "Next",
                             tint = Color.White, modifier = Modifier.size(36.dp))
                     }
 
@@ -243,8 +243,8 @@ private fun PlayerUI(
                     IconButton(onClick = { onEvent(PlayerUiEvent.CycleRepeat) }) {
                         Icon(
                             imageVector  = when (state.repeatMode) {
-                                RepeatMode.ONE -> Icons.Default.RepeatOne
-                                else           -> Icons.Default.Repeat
+                                RepeatMode.ONE -> Icons.Filled.RepeatOne
+                                else           -> Icons.Filled.Repeat
                             },
                             contentDescription = "Repeat",
                             tint     = if (state.repeatMode != RepeatMode.NONE)

@@ -3,7 +3,7 @@ package com.phantasia.music
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,7 +36,7 @@ fun AppNavigation(innerPadding: PaddingValues) {
     val navItems = listOf(
         NavItem(Route.Home,    "Home",    Icons.Filled.Home),
         NavItem(Route.Search,  "Search",  Icons.Filled.Search),
-        NavItem(Route.Library, "Library", Icons.Filled.LibraryMusic),
+        NavItem(Route.Library, "Library", Icons.Filled.List),
     )
     val backstackEntry by nav.currentBackStackEntryAsState()
     val currentDest   = backstackEntry?.destination

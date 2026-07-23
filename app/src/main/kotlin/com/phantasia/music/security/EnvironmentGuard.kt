@@ -36,7 +36,9 @@ class EnvironmentGuard @Inject constructor() {
             .build()
         return Interceptor { chain ->
             val req = chain.request()
-            pinner.check(req.url.host, chain.connection()!!.handshake()!!.peerCertificates())
+            val handshake = chain.connection()?.handshake()
+            val certificates = handshake?.peerCertificates ?: emptyList()
+            pinner.check(req.url.host, certificates)
             chain.proceed(req)
         }
     }

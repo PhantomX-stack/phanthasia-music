@@ -13,8 +13,13 @@ sealed interface PlayerUiState {
 }
 
 sealed interface PlayerUiEvent {
-    object Play; object Pause; object SkipNext; object SkipPrev
-    object ToggleShuffle; object CycleRepeat; object ToggleFavourite
+    object Play : PlayerUiEvent
+    object Pause : PlayerUiEvent
+    object SkipNext : PlayerUiEvent
+    object SkipPrev : PlayerUiEvent
+    object ToggleShuffle : PlayerUiEvent
+    object CycleRepeat : PlayerUiEvent
+    object ToggleFavourite : PlayerUiEvent
     data class Seek(val positionMs: Long)       : PlayerUiEvent
     data class PlayTrack(val track: TrackModel) : PlayerUiEvent
 }

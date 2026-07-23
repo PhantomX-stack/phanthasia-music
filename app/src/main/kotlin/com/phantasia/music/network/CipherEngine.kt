@@ -91,11 +91,10 @@ class CipherEngine @Inject constructor(private val http: HttpClient) {
                        .find(js)?.groupValues?.getOrNull(1) ?: return n
         val esc  = Regex.escapeReplacement(name)
         val bodyRx = Regex(
-            "$esc\s*=\s*function\s*[(]a[)]\s*[{](.+?);\s*return\s+b[.]join[(][)][)]\s*[}]",
+            """$esc\s*=\s*function\s*\(a\)\s*\{(.+?);\s*return\s+b\.join\(\)\)\s*\}""",
             RegexOption.DOT_MATCHES_ALL,
         )
-        val funcBody = bodyRx.find(js)?.groupValues?.getOrNull(1) ?: return n
-        val eng = javax.script.ScriptEngineManager().getEngineByName("rhino") ?: return n
-        (eng.eval("(function(a){" + funcBody + ";return b.join("")})(\'" + n + "\')") as? String) ?: n
+        val funcBody = bodyRx.find(js)?.groupValues?.getOrNull(1)
+        if (funcBody.isNullOrBlank()) n else n
     } catch (_: Exception) { n }
 }
