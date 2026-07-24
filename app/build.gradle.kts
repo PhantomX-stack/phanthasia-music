@@ -42,10 +42,13 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile     = file(System.getenv("KEYSTORE_PATH")     ?: "placeholder.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")      ?: ""
-            keyAlias      = System.getenv("KEY_ALIAS")              ?: ""
-            keyPassword   = System.getenv("KEY_PASSWORD")           ?: ""
+            val keystorePath = System.getenv("KEYSTORE_PATH") ?: "placeholder.jks"
+            if (file(keystorePath).exists()) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            }
         }
     }
 
@@ -57,7 +60,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            val keystorePath = System.getenv("KEYSTORE_PATH") ?: "placeholder.jks"
+            signingConfig = if (file(keystorePath).exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
         debug { isMinifyEnabled = false; applicationIdSuffix = ".debug" }
     }

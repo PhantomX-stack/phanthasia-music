@@ -17,3 +17,5 @@
     public static int d(...);
     public static int i(...);
 }
+-dontwarn org.slf4j.**
+-keep class org.slf4j.** { *; }
