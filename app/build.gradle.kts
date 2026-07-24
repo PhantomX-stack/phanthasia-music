@@ -31,6 +31,8 @@ android {
         versionCode   = 1
         versionName   = "1.0.0"
         buildConfigField("String", "INNERTUBE_API_KEY", secret("INNERTUBE_API_KEY").asBuildConfigString())
+        buildConfigField("String", "SPOTIFY_CLIENT_ID",
+            "\"${project.findProperty("spotify.client.id") ?: ""}\"")
     }
 
     signingConfigs {
@@ -99,4 +101,9 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.palette)
     implementation(libs.security.crypto)
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    // Custom Tabs for Spotify OAuth
+    implementation("androidx.browser:browser:1.8.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.5")
 }

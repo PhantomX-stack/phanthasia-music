@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -23,6 +24,10 @@ sealed class Route(val path: String) {
     object Home    : Route("home")
     object Search  : Route("search")
     object Library : Route("library")
+    object Settings : Route("settings")
+    object Queue    : Route("queue")
+    object GoogleLogin  : Route("google_login")
+    object SpotifyLogin : Route("spotify_login")
     object Player  : Route("player/{videoId}") {
         fun build(id: String) = "player/$id"
     }
@@ -37,6 +42,7 @@ fun AppNavigation(innerPadding: PaddingValues) {
         NavItem(Route.Home,    "Home",    Icons.Filled.Home),
         NavItem(Route.Search,  "Search",  Icons.Filled.Search),
         NavItem(Route.Library, "Library", Icons.Filled.List),
+        NavItem(Route.Settings, "Settings", Icons.Filled.Settings),
     )
     val backstackEntry by nav.currentBackStackEntryAsState()
     val currentDest   = backstackEntry?.destination
@@ -87,6 +93,10 @@ fun AppNavigation(innerPadding: PaddingValues) {
             composable(Route.Home.path)    { HomeScreen(nav) }
             composable(Route.Search.path)  { SearchScreen(nav) }
             composable(Route.Library.path) { LibraryScreen(nav) }
+            composable(Route.Settings.path) { SettingsScreen(nav) }
+            composable(Route.Queue.path)    { QueueScreen(nav) }
+            composable(Route.GoogleLogin.path)  { GoogleLoginScreen(nav) }
+            composable(Route.SpotifyLogin.path) { SpotifyLoginScreen(nav) }
             composable(
                 route     = Route.Player.path,
                 arguments = listOf(navArgument("videoId") { type = NavType.StringType })

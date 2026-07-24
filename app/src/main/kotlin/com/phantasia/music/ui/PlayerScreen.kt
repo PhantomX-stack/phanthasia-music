@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.phantasia.music.Route
 import com.phantasia.music.network.TrackModel
 import com.phantasia.music.player.RepeatMode
 
@@ -102,8 +103,17 @@ private fun PlayerUI(
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.White.copy(alpha = 0.7f)
                 )
-                IconButton(onClick = { /* options */ }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Options", tint = Color.White)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { nav.navigate(Route.Queue.path) }) {
+                        Icon(
+                            Icons.Default.QueueMusic,
+                            contentDescription = "Queue",
+                            tint = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                    IconButton(onClick = { /* options */ }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Options", tint = Color.White)
+                    }
                 }
             }
 
