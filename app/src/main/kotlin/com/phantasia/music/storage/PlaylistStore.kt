@@ -10,7 +10,11 @@ data class PlaylistEntity(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "playlist_song_cross_ref", primaryKeys = ["playlistId", "videoId"])
+@Entity(
+    tableName  = "playlist_song_cross_ref",
+    primaryKeys = ["playlistId", "videoId"],
+    indices    = [Index("videoId")]
+)
 data class PlaylistSongCrossRef(val playlistId: Long, val videoId: String)
 
 data class PlaylistWithSongs(
