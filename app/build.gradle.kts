@@ -33,6 +33,11 @@ android {
         buildConfigField("String", "INNERTUBE_API_KEY", secret("INNERTUBE_API_KEY").asBuildConfigString())
         buildConfigField("String", "SPOTIFY_CLIENT_ID",
             "\"${project.findProperty("spotify.client.id") ?: ""}\"")
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["room.schemaLocation"] = "$projectDir/schemas"
+            }
+        }
     }
 
     signingConfigs {
@@ -66,7 +71,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
 }
 
 dependencies {
