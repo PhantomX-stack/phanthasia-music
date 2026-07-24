@@ -11,6 +11,21 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.PhantasiaMusic">
         <activity
+            android:name=".accounts.GoogleLoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".accounts.SpotifyCallbackActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="phantasia"
+                    android:host="spotify-callback" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
