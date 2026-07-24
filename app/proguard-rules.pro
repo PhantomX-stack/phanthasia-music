@@ -17,3 +17,4 @@
     public static int d(...);
     public static int i(...);
 }
+-dontwarn org.slf4j.impl.StaticLoggerBinder
