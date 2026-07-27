@@ -157,17 +157,17 @@ private fun PlayerUI(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        if (state.track.albumTitle.isNotBlank() || state.track.durationMs > 0L) {
-                            Spacer(Modifier.height(10.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (state.track.albumTitle.isNotBlank()) {
-                                    PlayerInfoChip(Icons.Default.Album, state.track.albumTitle)
-                                }
-                                if (state.track.durationMs > 0L) {
-                                    PlayerInfoChip(Icons.Default.Schedule, formatMs(state.track.durationMs))
-                                }
-                            }
-                        }
+                       if (state.track.albumTitle.isNotBlank() || state.durationMs > 0L) {
+    Spacer(Modifier.height(10.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (state.track.albumTitle.isNotBlank()) {
+            PlayerInfoChip(Icons.Default.Album, state.track.albumTitle)
+        }
+        if (state.durationMs > 0L) {
+            PlayerInfoChip(Icons.Default.Schedule, formatMs(state.durationMs))
+        }
+    }
+}
                     }
                     IconButton(onClick = { onEvent(PlayerUiEvent.ToggleFavourite) }) {
                         Icon(
