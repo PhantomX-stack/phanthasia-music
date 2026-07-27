@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -152,8 +153,21 @@ private fun PlayerUI(
                         Text(
                             text  = state.track.artistName,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Color.White.copy(alpha = 0.75f)
+                            color = Color.White.copy(alpha = 0.75f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
+                        if (state.track.albumTitle.isNotBlank() || state.track.durationMs > 0L) {
+                            Spacer(Modifier.height(10.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (state.track.albumTitle.isNotBlank()) {
+                                    PlayerInfoChip(Icons.Default.Album, state.track.albumTitle)
+                                }
+                                if (state.track.durationMs > 0L) {
+                                    PlayerInfoChip(Icons.Default.Schedule, formatMs(state.track.durationMs))
+                                }
+                            }
+                        }
                     }
                     IconButton(onClick = { onEvent(PlayerUiEvent.ToggleFavourite) }) {
                         Icon(
@@ -265,6 +279,24 @@ private fun PlayerUI(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PlayerInfoChip(icon: ImageVector, label: String) {
+    Surface(
+        color = Color.White.copy(alpha = 0.14f),
+        contentColor = Color.White,
+        shape = RoundedCornerShape(50),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White.copy(alpha = 0.82f))
+            Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.82f), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

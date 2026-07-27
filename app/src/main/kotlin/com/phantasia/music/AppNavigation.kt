@@ -1,5 +1,6 @@
 package com.phantasia.music
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -49,12 +51,23 @@ fun AppNavigation(innerPadding: PaddingValues) {
     val showBottomBar = navItems.any { it.route.path == currentDest?.route }
 
     Scaffold(
-        modifier      = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        PhantasiaColors.Midnight,
+                        PhantasiaColors.Midnight2,
+                        PhantasiaColors.PurpleInk,
+                    ),
+                ),
+            ),
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
                     tonalElevation = androidx.compose.ui.unit.Dp(0f)
                 ) {
                     navItems.forEach { item ->
