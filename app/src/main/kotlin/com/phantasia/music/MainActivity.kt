@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.phantasia.music.ui.DarkModeOption
 import com.phantasia.music.ui.PhantasiaTheme
 import com.phantasia.music.ui.SettingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,11 +23,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val settings by settingsVm.state.collectAsStateWithLifecycle()
-            val darkMode = when (settings.darkMode) {
-                DarkModeOption.DARK -> true
-                DarkModeOption.LIGHT -> false
-                DarkModeOption.SYSTEM -> isSystemInDarkTheme()
-            }
+            val darkMode = true
             PhantasiaTheme(dark = darkMode) {
                 AppNavigation(innerPadding = PaddingValues(0.dp))
             }

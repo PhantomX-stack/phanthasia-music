@@ -26,12 +26,39 @@ class SearchViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
 
-    val history: Flow<List<SearchHistoryEntity>> = dao.getRecent(8)
+    // !! PERSISTED IN ROOM — survives app close/reopen
+    // getRecent() returns a Flow backed by Room DB — always up to date
+    val history: StateFlow<List<SearchHistoryEntity>> =
+        dao.getRecent(20).stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            emptyList()
+        )
+
+    private val _suggestions = MutableStateFlow<List<String>>(emptyList())
+    val suggestions: StateFlow<List<String>> = _suggestions.asStateFlow()
 
     init {
-        _query
-            .onEach { q -> if (q.isBlank()) _state.value = SearchUiState.Idle }
-            .debounce(320)
+        // Reset to Idle when query is blank
+        _query.filter { it.isBlank() }
+            .onEach { _state.value = SearchUiState.Idle; _suggestions.value = emptyList() }
+            .launchIn(viewModelScope)
+
+        // Live suggestions (200ms debounce — fast)
+        _query.debounce(200)
+            .distinctUntilChanged()
+            .filter { it.length >= 2 }
+            .flatMapLatest { q ->
+                flow {
+                    emit(runCatching { repo.getSearchSuggestions(q) }.getOrDefault(emptyList()))
+                }
+            }
+            .onEach { _suggestions.value = it }
+            .launchIn(viewModelScope)
+
+        // Actual search (320ms debounce — avoids API spam)
+        _query.debounce(320)
+            .distinctUntilChanged()
             .filter { it.isNotBlank() }
             .flatMapLatest { q ->
                 flow {
@@ -51,10 +78,23 @@ class SearchViewModel @Inject constructor(
             is SearchUiEvent.QueryChanged  -> _query.value = e.query
             is SearchUiEvent.ClearHistory  -> viewModelScope.launch { dao.clearAll() }
             is SearchUiEvent.TrackSelected -> viewModelScope.launch {
-                dao.insert(
-                    SearchHistoryEntity(query = e.videoId, type = SearchHistoryType.TRACK)
-                )
+                // Save the actual text query (not videoId) so history shows readable text
+                val q = _query.value.trim()
+                if (q.isNotBlank()) {
+                    dao.insert(SearchHistoryEntity(
+                        query = q,
+                        type  = SearchHistoryType.TRACK
+                    ))
+                }
             }
         }
+    }
+
+    fun searchFromHistory(query: String) {
+        _query.value = query
+    }
+
+    fun deleteHistoryItem(item: SearchHistoryEntity) {
+        viewModelScope.launch { dao.deleteById(item.id) }
     }
 }

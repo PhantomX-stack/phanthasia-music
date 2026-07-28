@@ -14,6 +14,9 @@ class InnerTubeRequests @Inject constructor(
     private val client: HttpClient,
     private val locale: InnerTubeLocale
 ) {
+    suspend fun home(continuation: String? = null): HttpResponse =
+        browse("FEmusic_home", cont = continuation)
+
     suspend fun search(q: String, cont: String? = null): HttpResponse =
         client.post("${IT.BASE}/search") {
             contentType(ContentType.Application.Json)
