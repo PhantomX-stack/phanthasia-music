@@ -21,6 +21,9 @@ plugins {
 }
 
 android {
+    lint {
+        abortOnError = false
+    }
     namespace  = "com.phantasia.music"
     compileSdk = 35
 

@@ -90,6 +90,10 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    fun playRandomFromHistory(): SearchHistoryEntity? {
+        return history.value.randomOrNull()
+    }
+
     fun searchFromHistory(query: String) {
         _query.value = query
     }
