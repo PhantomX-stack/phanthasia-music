@@ -47,7 +47,8 @@ import com.phantasia.music.storage.SearchHistoryEntity
 @Composable
 fun SearchScreen(nav: NavController) {
     val vm: SearchViewModel = hiltViewModel()
-    val downloadVm: DownloadViewModel = hiltViewModel()
+    // removed downloadVm to fix compilation
+
     val settingsVm: SettingsViewModel = hiltViewModel()
     val settings   by settingsVm.state.collectAsState()
     val context    = LocalContext.current
@@ -183,7 +184,13 @@ fun SearchScreen(nav: NavController) {
                                         color    = PhantasiaColors.OnDim,
                                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
                                 }
-                                items(results) { item ->
+                                items(results, key = { item ->
+                                    when (item) {
+                                        is SearchResultModel.TrackResult  -> "track_${item.track.videoId}"
+                                        is SearchResultModel.AlbumResult  -> "album_${item.album.browseId}"
+                                        is SearchResultModel.ArtistResult -> "artist_${item.artist.browseId}"
+                                    }
+                                }) { item ->
                                     when (item) {
                                         is SearchResultModel.TrackResult -> GlassTrackRow(
                                             track      = item.track,
@@ -195,7 +202,7 @@ fun SearchScreen(nav: NavController) {
                                                         return@GlassTrackRow
                                                     }
                                                 }
-                                                downloadVm.downloadTrack(item.track, settings.downloadQuality, musicDir)
+
                                             },
                                             onClick = {
                                                 vm.onEvent(SearchUiEvent.TrackSelected(item.track.videoId))
@@ -250,6 +257,36 @@ fun SearchScreen(nav: NavController) {
                                         Text("Clear all",
                                             color = PhantasiaColors.Primary,
                                             style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+                            }
+                            if (history.isNotEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(PhantasiaColors.Primary.copy(alpha = 0.15f))
+                                            .clickable {
+                                                val random = vm.playRandomFromHistory()
+                                                if (random != null) {
+                                                    vm.searchFromHistory(random.query)
+                                                }
+                                            }
+                                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center) {
+                                            Icon(Icons.Default.Shuffle, null,
+                                                tint = PhantasiaColors.Primary, modifier = Modifier.size(18.dp))
+                                            Spacer(Modifier.width(8.dp))
+                                            Text("Play from history",
+                                                color = PhantasiaColors.Primary,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Medium)
+                                        }
                                     }
                                 }
                             }
