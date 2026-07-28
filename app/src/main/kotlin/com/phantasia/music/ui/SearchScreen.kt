@@ -1,134 +1,277 @@
 package com.phantasia.music.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Environment
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.phantasia.music.Route
+import com.phantasia.music.network.AlbumModel
+import com.phantasia.music.network.ArtistModel
 import com.phantasia.music.network.SearchResultModel
+import com.phantasia.music.network.TrackModel
+import com.phantasia.music.storage.SearchHistoryEntity
 
 @Composable
 fun SearchScreen(nav: NavController) {
     val vm: SearchViewModel = hiltViewModel()
-    val query by vm.query.collectAsState()
-    val state by vm.uiState.collectAsState()
+    val downloadVm: DownloadViewModel = hiltViewModel()
+    val settingsVm: SettingsViewModel = hiltViewModel()
+    val settings   by settingsVm.state.collectAsState()
+    val context    = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(top = 56.dp)
-    ) {
-        // ── Search bar ────────────────────────────────────────────────────────
-        TextField(
-            value         = query,
-            onValueChange = { vm.onEvent(SearchUiEvent.QueryChanged(it)) },
-            placeholder   = { Text("Songs, artists, albums…") },
-            leadingIcon   = {
-                Icon(Icons.Default.Search, contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            trailingIcon  = {
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = { vm.onEvent(SearchUiEvent.QueryChanged("")) }) {
-                        Icon(Icons.Default.Close, contentDescription = "Clear",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            },
-            singleLine    = true,
-            modifier      = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(50)),
-            colors        = TextFieldDefaults.colors(
-                focusedContainerColor   = MaterialTheme.colorScheme.surfaceVariant,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                focusedIndicatorColor   = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor  = Color.Transparent
-            )
+    val query       by vm.query.collectAsState()
+    val state       by vm.uiState.collectAsState()
+    val history     by vm.history.collectAsState()
+    val suggestions by vm.suggestions.collectAsState()
+
+    val focusRequester = remember { FocusRequester() }
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* granted */ }
+
+    val musicDir = remember {
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize().background(
+            Brush.verticalGradient(listOf(
+                PhantasiaColors.Midnight, PhantasiaColors.GradMid, PhantasiaColors.GradBot
+            ))
         )
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Spacer(Modifier.height(52.dp))
 
-        Spacer(Modifier.height(16.dp))
+            // ── Glass search bar ───────────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.White.copy(alpha = 0.08f))
+                    .padding(horizontal = 16.dp, vertical = 13.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Search icon animates to purple when active
+                val iconColor by animateColorAsState(
+                    targetValue = if (query.isNotEmpty()) PhantasiaColors.Primary
+                                  else PhantasiaColors.OnDim,
+                    animationSpec = tween(300), label = "search_icon"
+                )
+                Icon(Icons.Default.Search, null,
+                    tint = iconColor, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(12.dp))
 
-        // ── Results ───────────────────────────────────────────────────────────
-        when (val s = state) {
-            is SearchUiState.Idle -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("🔍", style = MaterialTheme.typography.displaySmall)
-                        Spacer(Modifier.height(12.dp))
-                        Text(
-                            "Search for anything",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                BasicTextField(
+                    value          = query,
+                    onValueChange  = { vm.onEvent(SearchUiEvent.QueryChanged(it)) },
+                    textStyle      = MaterialTheme.typography.bodyLarge
+                        .copy(color = PhantasiaColors.OnSurface),
+                    singleLine     = true,
+                    cursorBrush   = SolidColor(PhantasiaColors.Primary),
+                    modifier       = Modifier.weight(1f).focusRequester(focusRequester),
+                    decorationBox  = { inner ->
+                        if (query.isEmpty()) {
+                            Text("Search songs, artists, albums…",
+                                color = PhantasiaColors.OnHint,
+                                style = MaterialTheme.typography.bodyLarge)
+                        }
+                        inner()
+                    }
+                )
+
+                // Animated clear/history buttons
+                AnimatedVisibility(query.isNotEmpty(),
+                    enter = fadeIn(tween(200)) + scaleIn(tween(200)),
+                    exit  = fadeOut(tween(200)) + scaleOut(tween(200))
+                ) {
+                    IconButton(onClick = { vm.onEvent(SearchUiEvent.QueryChanged("")) },
+                        modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.Close, "Clear",
+                            tint = PhantasiaColors.OnDim, modifier = Modifier.size(16.dp))
                     }
                 }
             }
 
-            is SearchUiState.Loading -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-            }
+            // ── Content area with animated transitions ─────────────────────────
+            AnimatedContent(
+                targetState   = when {
+                    state is SearchUiState.Loading          -> "loading"
+                    state is SearchUiState.Results          -> "results"
+                    state is SearchUiState.Error            -> "error"
+                    query.isNotEmpty() && suggestions.isNotEmpty() -> "suggestions"
+                    history.isNotEmpty()                    -> "history"
+                    else                                    -> "empty"
+                },
+                transitionSpec = {
+                    fadeIn(tween(200)) togetherWith fadeOut(tween(150))
+                },
+                label = "search_content"
+            ) { target ->
+                when (target) {
 
-            is SearchUiState.Error -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text  = s.message,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-
-            is SearchUiState.Results -> {
-                if (s.items.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "No results for \"$query\"",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    "loading" -> {
+                        Box(Modifier.fillMaxSize(), Alignment.Center) {
+                            CircularProgressIndicator(color = PhantasiaColors.Primary)
+                        }
                     }
-                } else {
-                    Text(
-                        text     = "${s.items.size} results",
-                        style    = MaterialTheme.typography.labelMedium,
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-                    )
-                    LazyColumn {
-                        items(s.items.size) { i ->
-                            when (val item = s.items[i]) {
-                                is SearchResultModel.TrackResult -> SearchTrackRow(
-                                    track    = item.track,
-                                    onClick  = { nav.navigate(Route.Player.build(item.track.videoId)) }
+
+                    "error" -> {
+                        Box(Modifier.fillMaxSize(), Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(32.dp)) {
+                                Text("Search failed", color = PhantasiaColors.OnSurface,
+                                    style = MaterialTheme.typography.titleMedium)
+                                Spacer(Modifier.height(8.dp))
+                                Text((state as? SearchUiState.Error)?.message ?: "",
+                                    color = PhantasiaColors.Error,
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+
+                    "results" -> {
+                        val results = (state as SearchUiState.Results).items
+                        LazyColumn(contentPadding = PaddingValues(bottom = 120.dp)) {
+                            if (results.isEmpty()) {
+                                item {
+                                    Box(Modifier.fillMaxWidth().padding(top = 64.dp),
+                                        Alignment.Center) {
+                                        Text("No results for \"$query\"",
+                                            color = PhantasiaColors.OnDim,
+                                            style = MaterialTheme.typography.bodyLarge)
+                                    }
+                                }
+                            } else {
+                                item {
+                                    Text("${results.size} results",
+                                        style    = MaterialTheme.typography.labelSmall,
+                                        color    = PhantasiaColors.OnDim,
+                                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
+                                }
+                                items(results) { item ->
+                                    when (item) {
+                                        is SearchResultModel.TrackResult -> GlassTrackRow(
+                                            track      = item.track,
+                                            onDownload = {
+                                                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                                                    if (ContextCompat.checkSelfPermission(context,
+                                                            Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                                                        permLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                                        return@GlassTrackRow
+                                                    }
+                                                }
+                                                downloadVm.downloadTrack(item.track, settings.downloadQuality, musicDir)
+                                            },
+                                            onClick = {
+                                                vm.onEvent(SearchUiEvent.TrackSelected(item.track.videoId))
+                                                nav.navigate(Route.Player.build(item.track.videoId))
+                                            }
+                                        )
+                                        is SearchResultModel.AlbumResult  -> GlassAlbumRow(item.album)
+                                        is SearchResultModel.ArtistResult -> GlassArtistRow(item.artist)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    "suggestions" -> {
+                        LazyColumn(contentPadding = PaddingValues(bottom = 120.dp)) {
+                            items(suggestions) { suggestion ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                        .clickable { vm.searchFromHistory(suggestion) }
+                                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.TrendingUp, null,
+                                        tint = PhantasiaColors.Primary,
+                                        modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(14.dp))
+                                    Text(suggestion, color = PhantasiaColors.OnSurface,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+
+                    "history" -> {
+                        LazyColumn(contentPadding = PaddingValues(bottom = 120.dp)) {
+                            item {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.CenterVertically
+                                ) {
+                                    Text("Recent searches",
+                                        style      = MaterialTheme.typography.titleSmall,
+                                        color      = PhantasiaColors.OnSurface,
+                                        fontWeight = FontWeight.SemiBold)
+                                    TextButton(
+                                        onClick = { vm.onEvent(SearchUiEvent.ClearHistory) }
+                                    ) {
+                                        Text("Clear all",
+                                            color = PhantasiaColors.Primary,
+                                            style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+                            }
+                            items(history, key = { it.id }) { item ->
+                                HistoryRow(
+                                    item     = item,
+                                    onTap    = { vm.searchFromHistory(item.query) },
+                                    onDelete = { vm.deleteHistoryItem(item) }
                                 )
-                                is SearchResultModel.AlbumResult -> SearchAlbumRow(
-                                    album = item.album
-                                )
-                                is SearchResultModel.ArtistResult -> SearchArtistRow(
-                                    artist = item.artist
-                                )
+                            }
+                        }
+                    }
+
+                    else -> {
+                        // Empty — no history, no query
+                        Box(Modifier.fillMaxSize(), Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("🔍", style = MaterialTheme.typography.displaySmall)
+                                Spacer(Modifier.height(12.dp))
+                                Text("Search for anything",
+                                    color = PhantasiaColors.OnDim,
+                                    style = MaterialTheme.typography.bodyLarge)
                             }
                         }
                     }
@@ -138,100 +281,123 @@ fun SearchScreen(nav: NavController) {
     }
 }
 
+// ── History row with individual delete ────────────────────────────────────────
 @Composable
-private fun SearchTrackRow(
-    track: com.phantasia.music.network.TrackModel,
-    onClick: () -> Unit
+private fun HistoryRow(
+    item:     SearchHistoryEntity,
+    onTap:    () -> Unit,
+    onDelete: () -> Unit
 ) {
-    ListItem(
-        headlineContent   = { Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = {
-            Text(
-                "${track.artistName} · Song",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
-        },
-        leadingContent = {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                AsyncImage(
-                    model              = track.artworkUrl,
-                    contentDescription = null,
-                    contentScale       = ContentScale.Crop,
-                    modifier           = Modifier.fillMaxSize()
-                )
-            }
-        },
-        colors   = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier.clickable { onClick() }
-    )
+    Row(
+        modifier = Modifier.fillMaxWidth()
+            .clickable { onTap() }
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(36.dp).clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.07f)),
+            contentAlignment = Alignment.Center) {
+            Icon(Icons.Default.History, null,
+                tint = PhantasiaColors.OnDim, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(item.query, color = PhantasiaColors.OnSurface,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f), maxLines = 1,
+            overflow = TextOverflow.Ellipsis)
+        // Individual delete X button
+        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.Close, "Remove",
+                tint = PhantasiaColors.OnHint, modifier = Modifier.size(15.dp))
+        }
+    }
+}
+
+// ── Glass result rows ─────────────────────────────────────────────────────────
+@Composable
+fun GlassTrackRow(track: TrackModel, onDownload: () -> Unit = {}, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(52.dp).clip(RoundedCornerShape(10.dp))
+            .background(Color.White.copy(alpha = 0.07f))) {
+            AsyncImage(model = track.artworkUrl, contentDescription = null,
+                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(track.title, color = PhantasiaColors.OnSurface,
+                style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(2.dp))
+            Text("${track.artistName} · Song", color = PhantasiaColors.OnDim,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        IconButton(onClick = onDownload, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.FileDownload, "Download",
+                tint = PhantasiaColors.Primary.copy(alpha = 0.7f),
+                modifier = Modifier.size(18.dp))
+        }
+        Icon(Icons.Default.PlayArrow, null, tint = PhantasiaColors.OnDim,
+            modifier = Modifier.size(20.dp))
+    }
 }
 
 @Composable
-private fun SearchAlbumRow(album: com.phantasia.music.network.AlbumModel) {
-    ListItem(
-        headlineContent   = { Text(album.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = {
-            Text(
-                "${album.artistName} · Album · ${album.year}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
-        },
-        leadingContent = {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                AsyncImage(
-                    model              = album.thumbnailUrl,
-                    contentDescription = null,
-                    contentScale       = ContentScale.Crop,
-                    modifier           = Modifier.fillMaxSize()
-                )
+fun GlassAlbumRow(album: AlbumModel) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(52.dp).clip(RoundedCornerShape(10.dp))
+            .background(Color.White.copy(alpha = 0.07f))) {
+            AsyncImage(model = album.thumbnailUrl, contentDescription = null,
+                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Album", style = MaterialTheme.typography.labelSmall,
+                    color = PhantasiaColors.Primary)
+                Text("·", color = PhantasiaColors.OnHint)
+                Text(album.year, style = MaterialTheme.typography.labelSmall,
+                    color = PhantasiaColors.OnHint)
             }
-        },
-        overlineContent  = { Text("Album", color = MaterialTheme.colorScheme.primary) },
-        colors           = ListItemDefaults.colors(containerColor = Color.Transparent)
-    )
+            Text(album.title, color = PhantasiaColors.OnSurface,
+                style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(album.artistName, color = PhantasiaColors.OnDim,
+                style = MaterialTheme.typography.bodySmall, maxLines = 1)
+        }
+    }
 }
 
 @Composable
-private fun SearchArtistRow(artist: com.phantasia.music.network.ArtistModel) {
-    ListItem(
-        headlineContent  = { Text(artist.name, maxLines = 1) },
-        leadingContent   = {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                if (artist.thumbnailUrl.isNotEmpty()) {
-                    AsyncImage(
-                        model              = artist.thumbnailUrl,
-                        contentDescription = null,
-                        contentScale       = ContentScale.Crop,
-                        modifier           = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Text(
-                        text     = artist.name.take(1).uppercase(),
-                        modifier = Modifier.align(Alignment.Center),
-                        style    = MaterialTheme.typography.titleLarge,
-                        color    = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+fun GlassArtistRow(artist: ArtistModel) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(52.dp).clip(CircleShape)
+            .background(Brush.linearGradient(listOf(
+                PhantasiaColors.PrimaryDim, PhantasiaColors.Secondary
+            ))), contentAlignment = Alignment.Center) {
+            if (artist.thumbnailUrl.isNotEmpty()) {
+                AsyncImage(model = artist.thumbnailUrl, contentDescription = null,
+                    contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            } else {
+                Text(artist.name.take(1).uppercase(),
+                    style = MaterialTheme.typography.titleLarge, color = Color.White)
             }
-        },
-        overlineContent  = { Text("Artist", color = MaterialTheme.colorScheme.primary) },
-        colors           = ListItemDefaults.colors(containerColor = Color.Transparent)
-    )
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Artist", style = MaterialTheme.typography.labelSmall,
+                color = PhantasiaColors.Secondary)
+            Text(artist.name, color = PhantasiaColors.OnSurface,
+                style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium,
+                maxLines = 1)
+        }
+    }
 }

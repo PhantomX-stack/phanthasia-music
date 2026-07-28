@@ -59,7 +59,7 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
-        debug { isMinifyEnabled = false; applicationIdSuffix = ".debug" }
+        debug { isMinifyEnabled = false }
     }
 
     buildFeatures {
@@ -110,6 +110,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.palette)
     implementation(libs.security.crypto)
+    // WorkManager for background downloads
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     // Custom Tabs for Spotify OAuth

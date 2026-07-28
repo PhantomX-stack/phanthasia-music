@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +20,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.phantasia.music.storage.DownloadEntity
+import com.phantasia.music.ui.DownloadedTrackRow
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.phantasia.music.Route
@@ -25,12 +29,15 @@ import com.phantasia.music.Route
 @Composable
 fun LibraryScreen(nav: NavController) {
     val vm: LibraryViewModel = hiltViewModel()
+    val downloadVm: DownloadViewModel = hiltViewModel()
     val favs      by vm.favourites.collectAsState()
     val playlists by vm.playlists.collectAsState(initial = emptyList())
+    val completedDownloads by downloadVm.completedDownloads.collectAsState()
 
     var selectedTab by remember { mutableStateOf(0) }
     var showNewPlaylistDialog by remember { mutableStateOf(false) }
     var newPlaylistName by remember { mutableStateOf("") }
+    var showImportSheet by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -70,6 +77,11 @@ fun LibraryScreen(nav: NavController) {
                 selected = selectedTab == 1,
                 onClick  = { selectedTab = 1 },
                 text     = { Text("Playlists") }
+            )
+            Tab(
+                selected = selectedTab == 2,
+                onClick  = { selectedTab = 2 },
+                text     = { Text("Offline") }
             )
         }
 
@@ -197,6 +209,20 @@ fun LibraryScreen(nav: NavController) {
         }
     }
 
+        Box(
+            modifier = Modifier.fillMaxSize().padding(end = 16.dp, bottom = 100.dp),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            FloatingActionButton(
+                onClick          = { showImportSheet = true },
+                containerColor   = PhantasiaColors.Primary,
+                contentColor     = Color.White,
+                shape            = RoundedCornerShape(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Import playlist")
+            }
+        }
+
     // ── New playlist dialog ────────────────────────────────────────────────────
     if (showNewPlaylistDialog) {
         AlertDialog(
@@ -228,5 +254,29 @@ fun LibraryScreen(nav: NavController) {
                 }
             }
         )
+    }
+    if (showImportSheet) {
+        @OptIn(ExperimentalMaterial3Api::class)
+        ModalBottomSheet(onDismissRequest = { showImportSheet = false }) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text("Import Playlist", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(16.dp))
+                ListItem(
+                    headlineContent = { Text("Import from YouTube Music") },
+                    modifier = Modifier.clickable {
+                        showImportSheet = false
+                        nav.navigate(Route.Accounts.path)
+                    }
+                )
+                ListItem(
+                    headlineContent = { Text("Import from Spotify") },
+                    modifier = Modifier.clickable {
+                        showImportSheet = false
+                        nav.navigate(Route.Accounts.path)
+                    }
+                )
+                Spacer(Modifier.height(32.dp))
+            }
+        }
     }
 }

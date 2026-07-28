@@ -31,6 +31,10 @@ class PlayerStateHolder @Inject constructor(private val player: ExoPlayer) {
         })
     }
 
+    fun updatePlayingState(newState: PlayerUiState.Playing) {
+        _state.value = newState
+    }
+
     fun loadTrack(track: TrackModel, url: String) {
         _state.value = PlayerUiState.Loading
         player.setMediaItem(MediaItem.fromUri(url)); player.prepare(); player.play()

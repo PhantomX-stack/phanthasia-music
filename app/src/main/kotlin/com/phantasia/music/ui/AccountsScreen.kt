@@ -29,7 +29,7 @@ fun AccountsScreen(nav: NavController) {
         Text("Connect accounts", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(24.dp))
         Button(
-            onClick = { nav.navigate(Route.GoogleLogin.path) },
+            onClick = { nav.navigate(Route.YtmLogin.path) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Connect YouTube Music")
