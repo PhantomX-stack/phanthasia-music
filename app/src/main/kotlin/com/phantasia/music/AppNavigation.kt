@@ -50,8 +50,8 @@ private data class TabItem(val route: Route, val label: String, val icon: ImageV
 private val TABS = listOf(
     TabItem(Route.Home,    "Home",    Icons.Filled.Home),
     TabItem(Route.Search,  "Search",  Icons.Filled.Search),
+    TabItem(Route.Stats,   "Stats",   Icons.Filled.BarChart),
     TabItem(Route.Library, "Library", Icons.Filled.LibraryMusic),
-    TabItem(Route.Settings,"Settings",Icons.Filled.Settings),
 )
 
 // Paths where bottom nav is visible
@@ -96,8 +96,9 @@ fun AppNavigation(innerPadding: PaddingValues) {
 
                     // Bottom nav bar
                     NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                        tonalElevation = 0.dp
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.75f),
+                        tonalElevation = 0.dp,
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
                     ) {
                         TABS.forEach { tab ->
                             val selected = backstackEntry?.destination

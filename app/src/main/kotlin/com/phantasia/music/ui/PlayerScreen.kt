@@ -1,6 +1,7 @@
 package com.phantasia.music.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +65,7 @@ private fun PlayerUI(
     onEvent: (PlayerUiEvent) -> Unit,
     nav:     NavController
 ) {
+    var showVideo by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()) {
 
         // ── Blurred gradient background from artwork ───────────────────────────
@@ -99,11 +103,35 @@ private fun PlayerUI(
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Back",
                         tint = Color.White, modifier = Modifier.size(28.dp))
                 }
-                Text(
-                    "NOW PLAYING",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.7f)
-                )
+
+                // Video / Thumbnail Toggle
+                Surface(
+                    color = Color.White.copy(alpha = 0.14f),
+                    shape = RoundedCornerShape(50),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxHeight(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clickable { showVideo = false }
+                                .background(if (!showVideo) PhantasiaColors.Primary else Color.Transparent)
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text("Song", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clickable { showVideo = true }
+                                .background(if (showVideo) PhantasiaColors.Primary else Color.Transparent)
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text("Video", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { nav.navigate(Route.Queue.path) }) {
                         Icon(

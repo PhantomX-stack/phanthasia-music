@@ -35,6 +35,9 @@ interface StatsDao {
     @Query("SELECT * FROM play_counts ORDER BY count DESC LIMIT :n")
     fun getTopSongs(n: Int = 20): Flow<List<PlayCountEntity>>
 
+    @Query("SELECT videoId, title, artistName, artworkUrl, COUNT(*) as count, SUM(durationMs) as totalMs FROM play_events WHERE playedAt >= :since GROUP BY videoId ORDER BY count DESC LIMIT :n")
+    fun getTopSongsSince(since: Long, n: Int = 20): Flow<List<PlayCountEntity>>
+
     @Query("SELECT SUM(durationMs) FROM play_events WHERE playedAt >= :since")
     fun getTotalListenTimeMs(since: Long): Flow<Long?>
 
