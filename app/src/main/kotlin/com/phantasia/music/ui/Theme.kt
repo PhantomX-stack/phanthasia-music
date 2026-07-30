@@ -15,12 +15,12 @@ import androidx.core.view.WindowCompat
 // ── Phantasia Midnight Purple Palette ─────────────────────────────────────────
 object PhantasiaColors {
     // Core backgrounds
-    val Midnight   = Color(0xFF050510)   // deepest black-purple
-    val Midnight2  = Color(0xFF0A0A1A)   // slightly lighter
+    val Midnight   = Color(0xCC050510)   // deepest black-purple
+    val Midnight2  = Color(0xCC0A0A1A)   // slightly lighter
     val PurpleInk  = Color(0xFF0F0F24)   // nav/surface base
-    val Surface    = Color(0xFF12122A)   // card surfaces
-    val SurfaceHigh= Color(0xFF1A1A3A)   // elevated cards
-    val SurfaceCard= Color(0xFF181830)   // list items
+    val Surface    = Color(0x8012122A)   // card surfaces
+    val SurfaceHigh= Color(0x801A1A3A)   // elevated cards
+    val SurfaceCard= Color(0x66181830)   // list items
 
     // Brand purples
     val Primary    = Color(0xFF9B59FF)   // main accent

@@ -44,6 +44,12 @@ android {
     }
 
     signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         create("release") {
             storeFile     = file(System.getenv("KEYSTORE_PATH")     ?: "placeholder.jks")
             storePassword = System.getenv("KEYSTORE_PASSWORD")      ?: ""
@@ -62,7 +68,7 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
-        debug { isMinifyEnabled = false }
+        debug { isMinifyEnabled = false; signingConfig = signingConfigs.getByName("debug") }
     }
 
     buildFeatures {

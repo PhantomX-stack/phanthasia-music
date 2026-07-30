@@ -57,7 +57,7 @@ fun LibraryScreen(nav: NavController) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { /* TODO settings */ }) {
+                IconButton(onClick = { nav.navigate(Route.Settings.path) }) {
                     Icon(Icons.Default.Settings, null, tint = PhantasiaColors.OnSurface)
                 }
             }
@@ -160,6 +160,24 @@ fun LibraryScreen(nav: NavController) {
                         }
                     }
                 }
+                2 -> {
+                    // Offline
+                    LazyColumn(contentPadding = PaddingValues(bottom = 120.dp)) {
+                        item {
+                            ListItem(
+                                modifier = Modifier.clickable { nav.navigate(Route.Downloads.path) },
+                                headlineContent = { Text("Downloaded Songs", color = PhantasiaColors.OnSurface) },
+                                supportingContent = { Text("Music available offline", color = PhantasiaColors.OnDim) },
+                                leadingContent = {
+                                    Box(modifier = Modifier.size(52.dp).clip(RoundedCornerShape(8.dp)).background(PhantasiaColors.Primary.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.Download, null, tint = PhantasiaColors.Primary)
+                                    }
+                                },
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -167,14 +185,14 @@ fun LibraryScreen(nav: NavController) {
             modifier = Modifier.fillMaxSize().padding(end = 16.dp, bottom = 100.dp),
             contentAlignment = Alignment.BottomEnd
         ) {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick          = { showImportSheet = true },
                 containerColor   = PhantasiaColors.Primary,
                 contentColor     = Color.White,
+                icon             = { Icon(Icons.Default.CloudSync, contentDescription = "Import/CloudSync") },
+                text             = { Text("Import") },
                 shape            = RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Import playlist")
-            }
+            )
         }
 
         if (showNewPlaylistDialog) {

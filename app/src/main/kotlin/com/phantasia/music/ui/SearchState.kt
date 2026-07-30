@@ -12,4 +12,5 @@ sealed interface SearchUiEvent {
     data class QueryChanged(val query: String)    : SearchUiEvent
     data class TrackSelected(val videoId: String) : SearchUiEvent
     object ClearHistory                           : SearchUiEvent
+    object SearchSubmitted                        : SearchUiEvent
 }

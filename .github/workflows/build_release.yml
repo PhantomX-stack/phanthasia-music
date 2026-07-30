@@ -42,11 +42,15 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Phantasia.apk
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: phantasia-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/Phantasia.apk
           retention-days: 14
 
       # ── Release build only on version tags (v1.0.0 etc) ───────────────────

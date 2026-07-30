@@ -76,6 +76,14 @@ class SearchViewModel @Inject constructor(
     fun onEvent(e: SearchUiEvent) {
         when (e) {
             is SearchUiEvent.QueryChanged  -> _query.value = e.query
+            is SearchUiEvent.SearchSubmitted -> {
+                val q = _query.value.trim()
+                if (q.isNotBlank()) {
+                    viewModelScope.launch {
+                        dao.insert(SearchHistoryEntity(query = q, type = SearchHistoryType.QUERY))
+                    }
+                }
+            }
             is SearchUiEvent.ClearHistory  -> viewModelScope.launch { dao.clearAll() }
             is SearchUiEvent.TrackSelected -> viewModelScope.launch {
                 // Save the actual text query (not videoId) so history shows readable text
