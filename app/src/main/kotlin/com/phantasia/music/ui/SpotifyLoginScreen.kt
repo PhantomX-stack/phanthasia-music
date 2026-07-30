@@ -39,11 +39,7 @@ private const val SPOTIFY_CLIENT_ID = ""   // <-- paste your client ID here
 fun SpotifyLoginScreen(nav: NavController) {
     val vm: AccountViewModel = hiltViewModel()
 
-    // Show setup instructions if no client ID configured
-    if (SPOTIFY_CLIENT_ID.isBlank()) {
-        SpotifySetupInstructions(nav)
-        return
-    }
+
 
     var isExchanging  by remember { mutableStateOf(false) }
     var errorMessage  by remember { mutableStateOf<String?>(null) }
@@ -119,35 +115,24 @@ fun SpotifyLoginScreen(nav: NavController) {
                                     domStorageEnabled = true
                                     databaseEnabled   = true
                                 }
-                                webViewClient = object : WebViewClient() {
-                                    override fun shouldOverrideUrlLoading(
-                                        view: WebView, request: WebResourceRequest
-                                    ): Boolean {
-                                        val url = request.url.toString()
-                                        if (url.startsWith("phantasia://spotify-callback")) {
-                                            val code  = request.url.getQueryParameter("code")
-                                            val error = request.url.getQueryParameter("error")
-                                            when {
-                                                error != null -> {
-                                                    errorMessage = "Spotify declined: $error"
-                                                }
-                                                code != null -> {
-                                                    isExchanging = true
-                                                    vm.onSpotifyCodeReceived(
-                                                        code         = code,
-                                                        codeVerifier = codeVerifier,
-                                                        clientId     = SPOTIFY_CLIENT_ID,
-                                                        onSuccess    = { nav.navigateUp() },
-                                                        onError      = { e ->
-                                                            isExchanging = false
-                                                            errorMessage = e
-                                                        }
-                                                    )
+                                webViewClient = object : android.webkit.WebViewClient() {
+                                    override fun onPageFinished(view: WebView, url: String?) {
+                                        url ?: return
+                                        if (url.startsWith("https://accounts.spotify.com") || url.startsWith("https://open.spotify.com")) {
+                                            val cookie = android.webkit.CookieManager.getInstance().getCookie(url)
+                                            if (!cookie.isNullOrBlank() && "sp_dc" in cookie && !isExchanging) {
+                                                isExchanging = true
+                                                // Extract just the sp_dc token
+                                                val spDc = cookie.split("; ").find { it.startsWith("sp_dc=") }?.substringAfter("sp_dc=")
+                                                if (spDc != null) {
+                                                    vm.onSpotifyTokenReceived(spDc)
+                                                    android.os.Handler(android.os.Looper.getMainLooper())
+                                                        .postDelayed({ nav.navigateUp() }, 600)
+                                                } else {
+                                                    isExchanging = false
                                                 }
                                             }
-                                            return true
                                         }
-                                        return false
                                     }
                                 }
                                 loadUrl(authUrl)

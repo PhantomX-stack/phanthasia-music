@@ -13,10 +13,16 @@ class SearchParser @Inject constructor() {
                 ?.arr("tabs")?.idx(0)?.obj("tabRenderer")?.obj("content")
                 ?.obj("sectionListRenderer")?.arr("contents") ?: return out
             for (section in sections) {
-                val items = section.obj("musicShelfRenderer")?.arr("contents") ?: continue
-                for (item in items) {
-                    val r = item.obj("musicResponsiveListItemRenderer") ?: continue
-                    parseItem(r)?.let { out.add(it) }
+                try {
+                    val items = section.obj("musicShelfRenderer")?.arr("contents") ?: continue
+                    for (item in items) {
+                        try {
+                            val r = item.obj("musicResponsiveListItemRenderer") ?: continue
+                            parseItem(r)?.let { out.add(it) }
+                        } catch (e: Exception) {
+                        }
+                    }
+                } catch (e: Exception) {
                 }
             }
         } catch (_: Exception) {}

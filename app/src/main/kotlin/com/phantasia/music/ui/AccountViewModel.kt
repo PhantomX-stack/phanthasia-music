@@ -70,9 +70,8 @@ class AccountViewModel @Inject constructor(
         prefs.putBoolean("${prefix}_connected", true)
     }
 
-    fun onSpotifyCodeReceived(code: String, codeVerifier: String, clientId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun onSpotifyTokenReceived(token: String) {
         // Stub implementation
-        onSuccess()
     }
 
     fun onYtmCookieReceived(cookie: String) {
