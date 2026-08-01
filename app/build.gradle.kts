@@ -63,6 +63,14 @@ android {
             // ~/.android/debug.keystore — the build never hard-fails again.
         }
     }
+    androidComponents {
+        onVariants(selector().all()) { variant ->
+            variant.outputs.forEach { output ->
+                val outputImpl = output as com.android.build.api.variant.impl.VariantOutputImpl
+                outputImpl.outputFileName.set("Phantasia.apk")
+            }
+        }
+    }
 
     buildTypes {
         release {
