@@ -44,17 +44,31 @@ android {
     }
 
     signingConfigs {
-        getByName("debug") {
-            storeFile = file("debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
         create("release") {
-            storeFile     = file(System.getenv("KEYSTORE_PATH")     ?: "placeholder.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")      ?: ""
-            keyAlias      = System.getenv("KEY_ALIAS")              ?: ""
-            keyPassword   = System.getenv("KEY_PASSWORD")           ?: ""
+            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "placeholder.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+        }
+        getByName("debug") {
+            val staticDebugKeystore = file("debug.keystore")
+            if (staticDebugKeystore.exists()) {
+                storeFile = staticDebugKeystore
+                storePassword = "phantasia123"
+                keyAlias = "phantasia-debug"
+                keyPassword = "phantasia123"
+            }
+            // If the file is ever missing for any reason, this block is
+            // skipped and AGP silently falls back to its own auto-generated
+            // ~/.android/debug.keystore — the build never hard-fails again.
+        }
+    }
+    androidComponents {
+        onVariants(selector().all()) { variant ->
+            variant.outputs.forEach { output ->
+                val outputImpl = output as com.android.build.api.variant.impl.VariantOutputImpl
+                outputImpl.outputFileName.set("Phantasia.apk")
+            }
         }
     }
 
@@ -68,7 +82,7 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
-        debug { isMinifyEnabled = false; signingConfig = signingConfigs.getByName("debug") }
+        debug { isMinifyEnabled = false;  }
     }
 
     buildFeatures {

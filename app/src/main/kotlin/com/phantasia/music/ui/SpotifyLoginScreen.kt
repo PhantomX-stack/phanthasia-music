@@ -8,6 +8,7 @@ import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.OpenInBrowser
@@ -69,7 +70,7 @@ fun SpotifyLoginScreen(nav: NavController) {
                 title = { Text("Connect Spotify", color = PhantasiaColors.OnSurface) },
                 navigationIcon = {
                     IconButton(onClick = { if (!isExchanging) nav.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, null, tint = PhantasiaColors.OnSurface)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = PhantasiaColors.OnSurface)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = PhantasiaColors.Surface)
@@ -154,7 +155,7 @@ private fun SpotifySetupInstructions(nav: NavController) {
                 title = { Text("Connect Spotify", color = PhantasiaColors.OnSurface) },
                 navigationIcon = {
                     IconButton(onClick = { nav.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, null, tint = PhantasiaColors.OnSurface)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = PhantasiaColors.OnSurface)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = PhantasiaColors.Surface)

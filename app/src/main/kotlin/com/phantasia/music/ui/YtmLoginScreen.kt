@@ -8,6 +8,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -37,7 +38,7 @@ fun YtmLoginScreen(nav: NavController) {
                     IconButton(onClick = {
                         if (!isCapturing) nav.navigateUp()
                     }) {
-                        Icon(Icons.Default.ArrowBack, null, tint = PhantasiaColors.OnSurface)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = PhantasiaColors.OnSurface)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = PhantasiaColors.Surface)

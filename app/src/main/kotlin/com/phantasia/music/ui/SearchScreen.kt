@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -226,7 +227,7 @@ fun SearchScreen(nav: NavController) {
                                         .padding(horizontal = 20.dp, vertical = 12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.TrendingUp, null,
+                                    Icon(Icons.AutoMirrored.Filled.TrendingUp, null,
                                         tint = PhantasiaColors.Primary,
                                         modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(14.dp))

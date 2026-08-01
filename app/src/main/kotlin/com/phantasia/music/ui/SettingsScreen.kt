@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -54,7 +55,7 @@ fun SettingsScreen(nav: NavController) {
                     Spacer(Modifier.height(52.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { nav.navigateUp() }) {
-                            Icon(Icons.Default.ArrowBack, null, tint = PhantasiaColors.OnSurface)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = PhantasiaColors.OnSurface)
                         }
                         Spacer(Modifier.width(8.dp))
                         Text("Settings", style = MaterialTheme.typography.headlineSmall,
@@ -133,10 +134,10 @@ fun SettingsScreen(nav: NavController) {
                         SettingsToggleRow(Icons.Default.GraphicEq, "Normalize volume",
                             "Keep loudness consistent", s.normalizeVolume) { vm.setNormalizeVolume(it) }
                         SettingsDivider()
-                        SettingsToggleRow(Icons.Default.VolumeOff, "Skip silence",
+                        SettingsToggleRow(Icons.AutoMirrored.Filled.VolumeOff, "Skip silence",
                             "Skip silent gaps between tracks", s.skipSilence) { vm.setSkipSilence(it) }
                         SettingsDivider()
-                        SettingsToggleRow(Icons.Default.QueueMusic, "Auto-play related",
+                        SettingsToggleRow(Icons.AutoMirrored.Filled.QueueMusic, "Auto-play related",
                             "Continue with recommendations after queue ends",
                             s.autoPlayRelated) { vm.setAutoPlayRelated(it) }
                         SettingsDivider()
@@ -186,7 +187,7 @@ fun SettingsScreen(nav: NavController) {
                         SettingsToggleRow(Icons.Default.Lyrics, "Show lyrics by default",
                             "Open player with lyrics visible", s.showLyricsByDefault) { vm.setShowLyricsByDefault(it) }
                         SettingsDivider()
-                        SettingsDropdownRow(Icons.Default.ViewQuilt, "Lyrics position",
+                        SettingsDropdownRow(Icons.AutoMirrored.Filled.ViewQuilt, "Lyrics position",
                             s.lyricsPosition.label, LyricsPosition.values().map { it.label }) { label ->
                             LyricsPosition.values().find { it.label == label }?.let { vm.setLyricsPosition(it) }
                         }

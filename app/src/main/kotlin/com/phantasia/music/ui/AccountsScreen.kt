@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -30,6 +31,7 @@ import com.phantasia.music.storage.ImportedPlaylistEntity
 fun AccountsScreen(nav: NavController) {
     val vm: AccountViewModel = hiltViewModel()
     val state by vm.state.collectAsState()
+    val progress by vm.importProgress.collectAsState()
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(state.syncMessage) {
@@ -47,13 +49,30 @@ fun AccountsScreen(nav: NavController) {
                 title          = { Text("Connected accounts", color = PhantasiaColors.OnSurface) },
                 navigationIcon = {
                     IconButton(onClick = { nav.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, null, tint = PhantasiaColors.OnSurface)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = PhantasiaColors.OnSurface)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
+        if (progress.isImporting) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(16.dp).padding(top = padding.calculateTopPadding()),
+                colors = CardDefaults.cardColors(containerColor = PhantasiaColors.SurfaceCard)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    LinearProgressIndicator(
+                        progress = { if (progress.total == 0) 0f else progress.current.toFloat() / progress.total.toFloat() },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = PhantasiaColors.Primary
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(progress.statusText, color = PhantasiaColors.OnSurface)
+                    Text("~${(progress.total - progress.current).coerceAtLeast(0) * 2}s remaining", color = PhantasiaColors.OnDim, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
         LazyColumn(
             modifier       = Modifier.fillMaxSize().padding(padding).background(
                 Brush.verticalGradient(listOf(
@@ -189,7 +208,7 @@ private fun ServiceCard(
                     playlists.take(3).forEach { pl ->
                         Row(verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(vertical = 2.dp)) {
-                            Icon(Icons.Default.QueueMusic, null,
+                            Icon(Icons.AutoMirrored.Filled.QueueMusic, null,
                                 tint = colour, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(8.dp))
                             Text("${pl.name} · ${pl.trackCount} songs",
@@ -227,7 +246,7 @@ private fun ServiceCard(
                         colors  = ButtonDefaults.outlinedButtonColors(
                             contentColor = PhantasiaColors.Error)
                     ) {
-                        Icon(Icons.Default.Logout, null, Modifier.size(14.dp))
+                        Icon(Icons.AutoMirrored.Filled.Logout, null, Modifier.size(14.dp))
                         Spacer(Modifier.width(6.dp))
                         Text("Disconnect")
                     }
