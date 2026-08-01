@@ -31,6 +31,7 @@ import com.phantasia.music.storage.ImportedPlaylistEntity
 fun AccountsScreen(nav: NavController) {
     val vm: AccountViewModel = hiltViewModel()
     val state by vm.state.collectAsState()
+    val progress by vm.importProgress.collectAsState()
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(state.syncMessage) {
@@ -55,6 +56,23 @@ fun AccountsScreen(nav: NavController) {
             )
         }
     ) { padding ->
+        if (progress.isImporting) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(16.dp).padding(top = padding.calculateTopPadding()),
+                colors = CardDefaults.cardColors(containerColor = PhantasiaColors.SurfaceCard)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    LinearProgressIndicator(
+                        progress = { if (progress.total == 0) 0f else progress.current.toFloat() / progress.total.toFloat() },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = PhantasiaColors.Primary
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(progress.statusText, color = PhantasiaColors.OnSurface)
+                    Text("~${(progress.total - progress.current).coerceAtLeast(0) * 2}s remaining", color = PhantasiaColors.OnDim, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
         LazyColumn(
             modifier       = Modifier.fillMaxSize().padding(padding).background(
                 Brush.verticalGradient(listOf(
