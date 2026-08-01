@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -135,7 +136,7 @@ private fun PlayerUI(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { nav.navigate(Route.Queue.path) }) {
                         Icon(
-                            Icons.Default.QueueMusic,
+                            Icons.AutoMirrored.Filled.QueueMusic,
                             contentDescription = "Queue",
                             tint = Color.White.copy(alpha = 0.8f)
                         )

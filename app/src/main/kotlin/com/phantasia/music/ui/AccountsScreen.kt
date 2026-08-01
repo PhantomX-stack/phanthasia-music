@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -47,7 +48,7 @@ fun AccountsScreen(nav: NavController) {
                 title          = { Text("Connected accounts", color = PhantasiaColors.OnSurface) },
                 navigationIcon = {
                     IconButton(onClick = { nav.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, null, tint = PhantasiaColors.OnSurface)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = PhantasiaColors.OnSurface)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -189,7 +190,7 @@ private fun ServiceCard(
                     playlists.take(3).forEach { pl ->
                         Row(verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(vertical = 2.dp)) {
-                            Icon(Icons.Default.QueueMusic, null,
+                            Icon(Icons.AutoMirrored.Filled.QueueMusic, null,
                                 tint = colour, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(8.dp))
                             Text("${pl.name} · ${pl.trackCount} songs",
@@ -227,7 +228,7 @@ private fun ServiceCard(
                         colors  = ButtonDefaults.outlinedButtonColors(
                             contentColor = PhantasiaColors.Error)
                     ) {
-                        Icon(Icons.Default.Logout, null, Modifier.size(14.dp))
+                        Icon(Icons.AutoMirrored.Filled.Logout, null, Modifier.size(14.dp))
                         Spacer(Modifier.width(6.dp))
                         Text("Disconnect")
                     }

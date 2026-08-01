@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -151,7 +152,7 @@ fun LibraryScreen(nav: NavController) {
                                     supportingContent = { Text("${pl.songs.size} songs", color = PhantasiaColors.OnDim) },
                                     leadingContent = {
                                         Box(modifier = Modifier.size(52.dp).clip(RoundedCornerShape(8.dp)).background(PhantasiaColors.Primary.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
-                                            Icon(Icons.Default.QueueMusic, null, tint = PhantasiaColors.Primary)
+                                            Icon(Icons.AutoMirrored.Filled.QueueMusic, null, tint = PhantasiaColors.Primary)
                                         }
                                     },
                                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)

@@ -26,6 +26,7 @@ signing.properties
 # Signing keys and certificates
 *.jks
 *.keystore
+!app/debug.keystore
 *.p12
 *.pfx
 *.pem
