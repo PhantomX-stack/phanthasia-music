@@ -259,7 +259,7 @@ private fun ServiceCard(
         AlertDialog(
             onDismissRequest = { showLogout = false },
             containerColor   = PhantasiaColors.SurfaceHigh,
-            title            = { Text("Disconnect \$name?", color = PhantasiaColors.OnSurface) },
+            title            = { Text("Disconnect $name?", color = PhantasiaColors.OnSurface) },
             text             = { Text("All imported playlists will be removed from Phantasia.",
                 color = PhantasiaColors.OnDim) },
             confirmButton    = {

@@ -5,8 +5,13 @@ val localProperties = Properties().apply {
     if (file.isFile) file.inputStream().use(::load)
 }
 
+val envProperties = Properties().apply {
+    val file = rootProject.file(".env")
+    if (file.isFile) file.inputStream().use(::load)
+}
+
 fun secret(name: String): String =
-    providers.environmentVariable(name).orNull ?: localProperties.getProperty(name).orEmpty()
+    providers.environmentVariable(name).orNull ?: envProperties.getProperty(name) ?: localProperties.getProperty(name).orEmpty()
 
 fun String.asBuildConfigString(): String =
     "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
@@ -44,31 +49,11 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "placeholder.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEY_ALIAS") ?: ""
-            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
-        }
-        getByName("debug") {
-            val staticDebugKeystore = file("debug.keystore")
-            if (staticDebugKeystore.exists()) {
-                storeFile = staticDebugKeystore
-                storePassword = "phantasia123"
-                keyAlias = "phantasia-debug"
-                keyPassword = "phantasia123"
-            }
-            // If the file is ever missing for any reason, this block is
-            // skipped and AGP silently falls back to its own auto-generated
-            // ~/.android/debug.keystore — the build never hard-fails again.
-        }
-    }
-    androidComponents {
-        onVariants(selector().all()) { variant ->
-            variant.outputs.forEach { output ->
-                val outputImpl = output as com.android.build.api.variant.impl.VariantOutputImpl
-                outputImpl.outputFileName.set("Phantasia.apk")
-            }
+        create("debugConfig") {
+            storeFile = file("${rootDir}/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
     }
 
@@ -80,16 +65,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
         }
-        debug { isMinifyEnabled = false;  }
+        debug {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debugConfig")
+        }
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
     }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

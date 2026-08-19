@@ -24,7 +24,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 // ── All routes ────────────────────────────────────────────────────────────────
 sealed class Route(val path: String) {
     object Home            : Route("home")
-    object Search          : Route("search")
+    object Search          : Route("search?q={q}") {
+        const val BASE = "search"
+        fun build(query: String = "") =
+            if (query.isBlank()) "search?q="
+            else "search?q=${java.net.URLEncoder.encode(query, "UTF-8")}"
+    }
     object Library         : Route("library")
     object Settings        : Route("settings")
     // Sub-pages — NOT in bottom nav
@@ -46,16 +51,17 @@ sealed class Route(val path: String) {
 
 private data class TabItem(val route: Route, val label: String, val icon: ImageVector)
 
-// All 4 bottom tabs — Stats is a sub-page accessible from Settings
+// All 5 bottom tabs
 private val TABS = listOf(
-    TabItem(Route.Home,    "Home",    Icons.Filled.Home),
-    TabItem(Route.Search,  "Search",  Icons.Filled.Search),
-    TabItem(Route.Stats,   "Stats",   Icons.Filled.BarChart),
-    TabItem(Route.Library, "Library", Icons.Filled.LibraryMusic),
+    TabItem(Route.Home,     "Home",     Icons.Filled.Home),
+    TabItem(Route.Search,   "Search",   Icons.Filled.Search),
+    TabItem(Route.Stats,    "Stats",    Icons.Filled.BarChart),
+    TabItem(Route.Library,  "Library",  Icons.Filled.LibraryMusic),
+    TabItem(Route.Settings, "Settings", Icons.Filled.Settings),
 )
 
 // Paths where bottom nav is visible
-private val TAB_PATHS = TABS.map { it.route.path }.toSet()
+private val TAB_PREFIXES = listOf("home", "search", "stats", "library", "settings")
 
 @Composable
 fun AppNavigation(innerPadding: PaddingValues) {
@@ -65,7 +71,7 @@ fun AppNavigation(innerPadding: PaddingValues) {
 
     val backstackEntry by nav.currentBackStackEntryAsState()
     val currentRoute   = backstackEntry?.destination?.route
-    val showBottomBar  = TAB_PATHS.contains(currentRoute)
+    val showBottomBar  = TAB_PREFIXES.any { currentRoute?.startsWith(it) == true }
     val isPlaying      = playerState is PlayerUiState.Playing
 
     Scaffold(
@@ -74,12 +80,16 @@ fun AppNavigation(innerPadding: PaddingValues) {
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
-                Column {
-                    // Mini player — slides in above nav bar
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                ) {
+                    // Mini player — Samsung Now Bar style floating above nav bar
                     AnimatedVisibility(
                         visible = isPlaying,
-                        enter   = slideInVertically(tween(280)) { it } + fadeIn(tween(280)),
-                        exit    = slideOutVertically(tween(220)) { it } + fadeOut(tween(220))
+                        enter   = slideInVertically(spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMedium)) { it } + fadeIn(tween(250)),
+                        exit    = slideOutVertically(spring(stiffness = Spring.StiffnessMedium)) { it } + fadeOut(tween(200))
                     ) {
                         (playerState as? PlayerUiState.Playing)?.let { playing ->
                             MiniPlayerBar(
@@ -96,25 +106,25 @@ fun AppNavigation(innerPadding: PaddingValues) {
 
                     // Bottom nav bar
                     NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.75f),
-                        tonalElevation = 0.dp,
-                        modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
+                        containerColor = Color(0xF50B0E17),
+                        tonalElevation = 8.dp,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         TABS.forEach { tab ->
-                            val selected = backstackEntry?.destination
-                                ?.hierarchy?.any { it.route == tab.route.path } == true
+                            val selected = when (tab.route) {
+                                Route.Search -> currentRoute?.startsWith("search") == true
+                                else -> backstackEntry?.destination?.hierarchy?.any { it.route == tab.route.path } == true
+                            }
                             NavigationBarItem(
                                 selected = selected,
                                 onClick  = {
-                                    if (!selected) {
-                                        nav.navigate(tab.route.path) {
-                                            // KEY FIX: pop back to start, not to current
-                                            popUpTo(nav.graph.findStartDestination().id) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState    = true
+                                    val destination = if (tab.route == Route.Search) Route.Search.build("") else tab.route.path
+                                    nav.navigate(destination) {
+                                        popUpTo(nav.graph.findStartDestination().id) {
+                                            saveState = true
                                         }
+                                        launchSingleTop = true
+                                        restoreState    = true
                                     }
                                 },
                                 icon  = {
@@ -148,7 +158,6 @@ fun AppNavigation(innerPadding: PaddingValues) {
             }
         }
     ) { scaffoldPadding ->
-        // KEY FIX: use padding(scaffoldPadding) so content does NOT go under nav bar
         NavHost(
             navController       = nav,
             startDestination    = Route.Home.path,
@@ -159,7 +168,11 @@ fun AppNavigation(innerPadding: PaddingValues) {
             popExitTransition   = { fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { (it * 0.04f).toInt() } },
         ) {
             composable(Route.Home.path)         { HomeScreen(nav) }
-            composable(Route.Search.path)        { SearchScreen(nav) }
+            composable(
+                route     = Route.Search.path,
+                arguments = listOf(navArgument("q") { type = NavType.StringType; defaultValue = "" })
+            ) { SearchScreen(nav) }
+            composable(Route.Search.BASE)       { SearchScreen(nav) }
             composable(Route.Library.path)       { LibraryScreen(nav) }
             composable(Route.Settings.path)      { SettingsScreen(nav) }
             composable(Route.Stats.path)         { StatsScreen(nav) }
@@ -171,7 +184,28 @@ fun AppNavigation(innerPadding: PaddingValues) {
             composable(Route.YtmLogin.path)      { YtmLoginScreen(nav) }
             composable(
                 route     = Route.Player.path,
-                arguments = listOf(navArgument("videoId") { type = NavType.StringType })
+                arguments = listOf(navArgument("videoId") { type = NavType.StringType }),
+                enterTransition = {
+                    slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+                    ) + fadeIn(tween(250))
+                },
+                exitTransition = {
+                    slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+                    ) + fadeOut(tween(200))
+                },
+                popEnterTransition = {
+                    fadeIn(tween(200))
+                },
+                popExitTransition = {
+                    slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    ) + fadeOut(tween(220))
+                }
             ) { back ->
                 val videoId = back.arguments?.getString("videoId") ?: return@composable
                 PlayerScreen(videoId, nav)
@@ -191,6 +225,3 @@ fun AppNavigation(innerPadding: PaddingValues) {
         }
     }
 }
-
-// ── Helpers needed by animation ───────────────────────────────────────────────
-private fun androidx.compose.ui.graphics.GraphicsLayerScope.graphicsLayer(block: () -> Unit) = block()

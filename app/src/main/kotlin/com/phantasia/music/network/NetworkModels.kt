@@ -8,6 +8,7 @@ data class TrackModel(
     val videoId: String, val title: String, val artistName: String,
     val albumTitle: String, val artworkUrl: String,
     val durationSeconds: Long = 0L, val isExplicit: Boolean = false,
+    val streamUrl: String? = null
 )
 
 @Serializable

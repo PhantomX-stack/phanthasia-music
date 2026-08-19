@@ -12,54 +12,62 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
-// ── Phantasia Midnight Purple Palette ─────────────────────────────────────────
+// ── Phantasia Cyber-Obsidian & Neon Aura Palette ─────────────────────────────
 object PhantasiaColors {
-    // Core backgrounds
-    val Midnight   = Color(0xCC050510)   // deepest black-purple
-    val Midnight2  = Color(0xCC0A0A1A)   // slightly lighter
-    val PurpleInk  = Color(0xFF0F0F24)   // nav/surface base
-    val Surface    = Color(0x8012122A)   // card surfaces
-    val SurfaceHigh= Color(0x801A1A3A)   // elevated cards
-    val SurfaceCard= Color(0x66181830)   // list items
+    // Core obsidian glass backgrounds
+    val Midnight   = Color(0xFF08090E)   // deep obsidian base
+    val Midnight2  = Color(0xFF0D1018)   // dark obsidian surface
+    val PurpleInk  = Color(0xFF101422)   // navigation/topbar surface
+    val Surface    = Color(0xCC131826)   // frosted card glass
+    val SurfaceHigh= Color(0xE61B2236)   // elevated floating cards
+    val SurfaceCard= Color(0x99161C2C)   // list item cards
 
-    // Brand purples
-    val Primary    = Color(0xFF9B59FF)   // main accent
-    val PrimaryDim = Color(0xFF7B3FEF)   // pressed/container
-    val PrimaryGlow= Color(0xFFBB86FC)   // text on dark
-    val Secondary  = Color(0xFF6C63FF)   // indigo accent
-    val Tertiary   = Color(0xFFE040FB)   // magenta pop
+    // Vibrant Electric & Neon Accents
+    val Primary    = Color(0xFF00F5D4)   // Electric Mint / Cyan
+    val PrimaryDim = Color(0xFF00BFA5)   // Pressed / dark mint
+    val PrimaryGlow= Color(0xFF70FFF0)   // Text glow on dark
+    val Secondary  = Color(0xFF8B5CF6)   // Neon Violet
+    val Tertiary   = Color(0xFFFF3366)   // Coral Pink Pop
+    val ElectricBlue = Color(0xFF38BDF8) // Bright Sky Blue
 
-    // Gradient stops
-    val GradTop    = Color(0xFF0D0520)   // deep violet
-    val GradMid    = Color(0xFF080818)   // near black
-    val GradBot    = Color(0xFF050510)   // pitch black
+    // Atmospheric Gradients
+    val GradTop    = Color(0xFF0F172A)   // deep navy slate
+    val GradMid    = Color(0xFF0B0F19)   // midnight core
+    val GradBot    = Color(0xFF08090E)   // pitch obsidian
 
-    // Text
-    val OnBg       = Color(0xFFEDE8FF)
-    val OnSurface  = Color(0xFFDDD8F8)
-    val OnDim      = Color(0xFF8880A8)
-    val OnHint     = Color(0xFF555575)
+    // Dynamic accent gradient list
+    val AuraGradient = listOf(Color(0xFF00F5D4), Color(0xFF8B5CF6), Color(0xFFFF3366))
+    val CyanVioletGrad = listOf(Color(0xFF00F5D4), Color(0xFF8B5CF6))
+    val VioletPinkGrad = listOf(Color(0xFF8B5CF6), Color(0xFFFF3366))
+    val BlueCyanGrad = listOf(Color(0xFF38BDF8), Color(0xFF00F5D4))
+
+    // High-contrast modern typography colors
+    val OnBg       = Color(0xFFF8FAFC)
+    val OnSurface  = Color(0xFFE2E8F0)
+    val OnDim      = Color(0xFF94A3B8)
+    val OnHint     = Color(0xFF64748B)
 
     // Utility
-    val Outline    = Color(0xFF252545)
-    val Error      = Color(0xFFFF5252)
-    val Success    = Color(0xFF4CAF50)
+    val Outline    = Color(0xFF243048)
+    val OutlineGlow= Color(0x4D00F5D4)
+    val Error      = Color(0xFFFF4B4B)
+    val Success    = Color(0xFF00E676)
     val Warning    = Color(0xFFFFB74D)
 }
 
 private val PhantasiaDark = darkColorScheme(
     primary            = PhantasiaColors.Primary,
-    onPrimary          = Color.White,
-    primaryContainer   = PhantasiaColors.PrimaryDim,
+    onPrimary          = Color(0xFF051B17),
+    primaryContainer   = Color(0xFF003830),
     onPrimaryContainer = PhantasiaColors.PrimaryGlow,
     secondary          = PhantasiaColors.Secondary,
     onSecondary        = Color.White,
-    secondaryContainer = Color(0xFF1C1950),
-    onSecondaryContainer = PhantasiaColors.PrimaryGlow,
+    secondaryContainer = Color(0xFF261247),
+    onSecondaryContainer = Color(0xFFD8B4FE),
     tertiary           = PhantasiaColors.Tertiary,
     onTertiary         = Color.White,
-    tertiaryContainer  = Color(0xFF3A0050),
-    onTertiaryContainer= Color(0xFFF8AAFF),
+    tertiaryContainer  = Color(0xFF4C0519),
+    onTertiaryContainer= Color(0xFFFFD1DC),
     background         = PhantasiaColors.Midnight,
     onBackground       = PhantasiaColors.OnBg,
     surface            = PhantasiaColors.Surface,
@@ -71,7 +79,7 @@ private val PhantasiaDark = darkColorScheme(
     errorContainer     = Color(0xFF4A0010),
     onErrorContainer   = Color(0xFFFFDAD6),
     outline            = PhantasiaColors.Outline,
-    outlineVariant     = Color(0xFF1E1E40),
+    outlineVariant     = Color(0xFF1E283C),
     surfaceTint        = PhantasiaColors.Primary,
     scrim              = Color.Black,
     inverseSurface     = PhantasiaColors.OnBg,

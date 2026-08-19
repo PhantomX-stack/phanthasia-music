@@ -2,7 +2,6 @@ package com.phantasia.music.security
 
 import android.os.Build
 import android.os.Debug
-import okhttp3.CertificatePinner
 import okhttp3.Interceptor
 import java.io.File
 import javax.inject.Inject
@@ -28,18 +27,10 @@ class EnvironmentGuard @Inject constructor() {
     private fun isTestKeysBuild() = Build.TAGS?.contains("test-keys") == true
     private fun isDebuggerConnected() = Debug.isDebuggerConnected() || Debug.waitingForDebugger()
 
-    fun sslPinningInterceptor(): Interceptor {
-        val pinner = CertificatePinner.Builder()
-            .add("*.youtube.com",     "sha256/YZPgTZ+woNCCCIW3LH2CxQeLzB/1m42QcCTBSdgayjs=")
-            .add("*.youtube.com",     "sha256/++MBgDH5WGvL9Bcn5Be30cRcL0f5O+NyoXuWtQdX1aI=")
-            .add("music.youtube.com", "sha256/YZPgTZ+woNCCCIW3LH2CxQeLzB/1m42QcCTBSdgayjs=")
-            .build()
+    fun standardNetworkInterceptor(): Interceptor {
         return Interceptor { chain ->
-            val req = chain.request()
-            val handshake = chain.connection()?.handshake()
-            val certificates = handshake?.peerCertificates ?: emptyList()
-            pinner.check(req.url.host, certificates)
-            chain.proceed(req)
+            chain.proceed(chain.request())
         }
     }
 }
+

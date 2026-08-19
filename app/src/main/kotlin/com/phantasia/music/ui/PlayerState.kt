@@ -13,16 +13,18 @@ sealed interface PlayerUiState {
     object Idle    : PlayerUiState
     object Loading : PlayerUiState
     data class Playing(
-        val track:          TrackModel,
-        val positionMs:     Long,
-        val durationMs:     Long,
-        val isPlaying:      Boolean,
-        val shuffleEnabled: Boolean,
-        val repeatMode:     RepeatMode,
-        val isFavourite:    Boolean         = false,
-        val viewMode:       PlayerViewMode  = PlayerViewMode.THUMBNAIL,
-        val showLyrics:     Boolean         = false,
-        val lyricsLines:    List<com.phantasia.music.ui.LrcLine>   = emptyList()
+        val track:               TrackModel,
+        val positionMs:          Long,
+        val durationMs:          Long,
+        val isPlaying:           Boolean,
+        val shuffleEnabled:      Boolean,
+        val repeatMode:          RepeatMode,
+        val isFavourite:         Boolean         = false,
+        val viewMode:            PlayerViewMode  = PlayerViewMode.THUMBNAIL,
+        val showLyrics:          Boolean         = false,
+        val lyricsLines:         List<com.phantasia.music.ui.LrcLine>   = emptyList(),
+        val isSearchingLyrics:   Boolean         = false,
+        val lyricsStatusMessage: String?         = null
     ) : PlayerUiState
 }
 
@@ -35,8 +37,15 @@ sealed interface PlayerUiEvent {
     object CycleRepeat       : PlayerUiEvent
     object ToggleFavourite   : PlayerUiEvent
     object ToggleLyrics      : PlayerUiEvent
+    data class SearchLyricsOnline(val customQuery: String? = null) : PlayerUiEvent
     object SetViewThumbnail  : PlayerUiEvent   // show artwork
     object SetViewVideo      : PlayerUiEvent   // show video WebView
     data class Seek(val positionMs: Long)       : PlayerUiEvent
-    data class PlayTrack(val track: TrackModel) : PlayerUiEvent
+    data class PlayTrack(val track: TrackModel, val playlist: List<TrackModel> = emptyList()) : PlayerUiEvent
+    data class PlayQueueIndex(val index: Int)   : PlayerUiEvent
+    data class RemoveQueueIndex(val index: Int) : PlayerUiEvent
+    data class AddToQueue(val track: TrackModel): PlayerUiEvent
+    data class PlayNext(val track: TrackModel)  : PlayerUiEvent
+    object ClearQueue                           : PlayerUiEvent
+    object Stop                                 : PlayerUiEvent
 }

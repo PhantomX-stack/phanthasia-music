@@ -1,0 +1,6 @@
+{
+  "name": "Phantasia Music",
+  "description": "A feature-rich music streaming application with YouTube Music & Spotify integration, local persistence, offline downloads, audio player, queue management, and lyrics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

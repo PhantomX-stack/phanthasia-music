@@ -31,20 +31,84 @@ internal object IT {
     const val SDK    = 34
     const val UA     = "com.google.android.apps.youtube.music/6.45.52 (Linux; U; Android 14) gzip"
     const val BASE   = "https://music.youtube.com/youtubei/v1"
+    const val YT_BASE= "https://www.youtube.com/youtubei/v1"
     const val PLAYER = "https://www.youtube.com/s/player/4248d3c7/player_ias.vflset/en_US/base.js"
 }
 
 data class InnerTubeLocale(val gl: String = "US", val hl: String = "en")
 
-fun buildContext(l: InnerTubeLocale): MutableMap<String, Any> = mutableMapOf(
-    "context" to mapOf(
-        "client" to mapOf(
-            "clientName" to IT.NAME, "clientVersion" to IT.VER,
-            "androidSdkVersion" to IT.SDK, "hl" to l.hl, "gl" to l.gl,
-            "userAgent" to IT.UA, "timeZone" to "UTC", "utcOffsetMinutes" to 0
+enum class ClientType {
+    ANDROID_MUSIC,
+    ANDROID,
+    WEB_REMIX,
+    IOS,
+    ANDROID_TESTSUITE,
+    TVHTML5_SIMPLY_EMBEDDED
+}
+
+fun buildContext(l: InnerTubeLocale, type: ClientType = ClientType.ANDROID_MUSIC): MutableMap<String, Any> {
+    val clientMap = when (type) {
+        ClientType.ANDROID_MUSIC -> mapOf(
+            "clientName" to "ANDROID_MUSIC",
+            "clientVersion" to "6.45.52",
+            "androidSdkVersion" to 34,
+            "hl" to l.hl,
+            "gl" to l.gl,
+            "userAgent" to IT.UA,
+            "timeZone" to "UTC",
+            "utcOffsetMinutes" to 0
         )
-    )
-)
+        ClientType.ANDROID -> mapOf(
+            "clientName" to "ANDROID",
+            "clientVersion" to "19.09.37",
+            "androidSdkVersion" to 34,
+            "hl" to l.hl,
+            "gl" to l.gl,
+            "userAgent" to "com.google.android.youtube/19.09.37 (Linux; U; Android 14) gzip",
+            "timeZone" to "UTC",
+            "utcOffsetMinutes" to 0
+        )
+        ClientType.WEB_REMIX -> mapOf(
+            "clientName" to "WEB_REMIX",
+            "clientVersion" to "1.20240101.01.00",
+            "hl" to l.hl,
+            "gl" to l.gl,
+            "userAgent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
+            "timeZone" to "UTC",
+            "utcOffsetMinutes" to 0
+        )
+        ClientType.IOS -> mapOf(
+            "clientName" to "IOS",
+            "clientVersion" to "19.09.3",
+            "deviceModel" to "iPhone14,3",
+            "hl" to l.hl,
+            "gl" to l.gl,
+            "userAgent" to "com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 17_4 like Mac OS X)",
+            "timeZone" to "UTC",
+            "utcOffsetMinutes" to 0
+        )
+        ClientType.ANDROID_TESTSUITE -> mapOf(
+            "clientName" to "ANDROID_TESTSUITE",
+            "clientVersion" to "1.9",
+            "androidSdkVersion" to 30,
+            "hl" to l.hl,
+            "gl" to l.gl,
+            "userAgent" to "GooglePlay/30.0.0 (Linux; Android 11)",
+            "timeZone" to "UTC",
+            "utcOffsetMinutes" to 0
+        )
+        ClientType.TVHTML5_SIMPLY_EMBEDDED -> mapOf(
+            "clientName" to "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+            "clientVersion" to "2.0",
+            "hl" to l.hl,
+            "gl" to l.gl,
+            "userAgent" to "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/76.0.3809.146 TV Safari/537.36",
+            "timeZone" to "UTC",
+            "utcOffsetMinutes" to 0
+        )
+    }
+    return mutableMapOf("context" to mapOf("client" to clientMap))
+}
 
 @Qualifier @Retention(AnnotationRetention.BINARY)
 annotation class InnerTubeHttp
@@ -64,16 +128,17 @@ object NetworkModule {
             .readTimeout(30,    TimeUnit.SECONDS)
             .writeTimeout(15,   TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
-            .addInterceptor(guard.sslPinningInterceptor())
+            .addInterceptor(guard.standardNetworkInterceptor())
             .addInterceptor { chain ->
-                val request = chain.request().newBuilder()
-                    .header("User-Agent",                IT.UA)
-                    .header("Content-Type",              "application/json")
-                    .header("X-Goog-Api-Format-Version", "2")
-                    .header("Origin",                    "https://music.youtube.com")
-                    .header("Referer",                   "https://music.youtube.com/")
+                val origReq = chain.request()
+                val existingUa = origReq.header("User-Agent")
+                val request = origReq.newBuilder()
                     .apply {
-                        if (IT.KEY.isNotBlank()) header("X-Goog-Api-Key", IT.KEY)
+                        if (existingUa.isNullOrBlank()) header("User-Agent", IT.UA)
+                        header("X-Goog-Api-Format-Version", "2")
+                        if (IT.KEY.isNotBlank() && origReq.header("X-Goog-Api-Key") == null) {
+                            header("X-Goog-Api-Key", IT.KEY)
+                        }
                     }
                     .build()
                 chain.proceed(request)

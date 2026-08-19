@@ -128,6 +128,10 @@ fun YtmLoginScreen(nav: NavController) {
                                 "&hl=en&followup=https%3A%2F%2Fmusic.youtube.com%2F"
                             )
                         }
+                    },
+                    onRelease = { webView ->
+                        webView.stopLoading()
+                        webView.destroy()
                     }
                 )
             }

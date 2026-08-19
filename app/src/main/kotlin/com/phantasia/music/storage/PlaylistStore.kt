@@ -30,5 +30,10 @@ interface PlaylistDao {
     @Delete suspend fun delete(p: PlaylistEntity)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun addSong(x: PlaylistSongCrossRef)
     @Delete suspend fun removeSong(x: PlaylistSongCrossRef)
+    @Query("DELETE FROM playlist_song_cross_ref WHERE playlistId = :playlistId") suspend fun clearSongs(playlistId: Long)
+    @Query("DELETE FROM playlists WHERE playlistId = :playlistId") suspend fun deleteById(playlistId: Long)
+    @Query("SELECT * FROM playlists WHERE name = :name LIMIT 1") suspend fun getByName(name: String): PlaylistEntity?
+    @Transaction @Query("SELECT * FROM playlists WHERE playlistId = :id LIMIT 1") fun getById(id: Long): Flow<PlaylistWithSongs?>
+    @Transaction @Query("SELECT * FROM playlists WHERE playlistId = :id LIMIT 1") suspend fun getByIdSync(id: Long): PlaylistWithSongs?
     @Transaction @Query("SELECT * FROM playlists ORDER BY createdAt DESC") fun getAll(): Flow<List<PlaylistWithSongs>>
 }

@@ -54,16 +54,20 @@ fun SettingsScreen(nav: NavController) {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                     Spacer(Modifier.height(52.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { nav.navigateUp() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = PhantasiaColors.OnSurface)
+                        IconButton(onClick = {
+                            if (!nav.popBackStack()) {
+                                nav.navigate(Route.Library.path)
+                            }
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = PhantasiaColors.OnBg)
                         }
                         Spacer(Modifier.width(8.dp))
                         Text("Settings", style = MaterialTheme.typography.headlineSmall,
-                            color = PhantasiaColors.OnSurface, fontWeight = FontWeight.Bold,
+                            color = PhantasiaColors.OnBg, fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f))
                         IconButton(onClick = { isSearching = !isSearching; if (!isSearching) searchQuery = "" }) {
                             Icon(if (isSearching) Icons.Default.Close else Icons.Default.Search,
-                                null, tint = PhantasiaColors.OnSurface)
+                                null, tint = PhantasiaColors.OnBg)
                         }
                     }
 
@@ -396,17 +400,19 @@ fun SettingsSectionHeader(title: String) {
 @Composable
 fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape    = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape    = RoundedCornerShape(22.dp),
         colors   = CardDefaults.cardColors(containerColor = PhantasiaColors.SurfaceCard)
-    ) { Column(content = content) }
+    ) { Column(modifier = Modifier.padding(vertical = 4.dp), content = content) }
 }
 
 @Composable
 fun SettingsDivider() = HorizontalDivider(
-    modifier   = Modifier.padding(start = 54.dp, end = 16.dp),
+    modifier   = Modifier.padding(start = 64.dp, end = 18.dp),
     thickness  = 0.5.dp,
-    color      = PhantasiaColors.Outline.copy(alpha = 0.5f)
+    color      = PhantasiaColors.Outline.copy(alpha = 0.35f)
 )
 
 @Composable
@@ -415,14 +421,14 @@ fun SettingsToggleRow(
     checked: Boolean, onToggle: (Boolean) -> Unit
 ) {
     ListItem(
-        headlineContent   = { Text(title, color = PhantasiaColors.OnSurface) },
+        headlineContent   = { Text(title, color = PhantasiaColors.OnSurface, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium) },
         supportingContent = { Text(subtitle, color = PhantasiaColors.OnDim,
-            style = MaterialTheme.typography.bodySmall) },
+            style = MaterialTheme.typography.bodyMedium) },
         leadingContent    = {
-            Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                .background(PhantasiaColors.Primary.copy(alpha = 0.15f)),
+            Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                .background(PhantasiaColors.Primary.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = PhantasiaColors.Primary, modifier = Modifier.size(20.dp))
+                Icon(icon, null, tint = PhantasiaColors.Primary, modifier = Modifier.size(24.dp))
             }
         },
         trailingContent   = {
@@ -445,31 +451,31 @@ fun SettingsDropdownRow(
 ) {
     var expanded by remember { mutableStateOf(false) }
     ListItem(
-        headlineContent   = { Text(title, color = PhantasiaColors.OnSurface) },
+        headlineContent   = { Text(title, color = PhantasiaColors.OnSurface, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium) },
         supportingContent = { Text(value, color = PhantasiaColors.Primary,
-            style = MaterialTheme.typography.bodySmall) },
+            style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold) },
         leadingContent    = {
-            Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                .background(PhantasiaColors.Primary.copy(alpha = 0.15f)),
+            Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                .background(PhantasiaColors.Primary.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = PhantasiaColors.Primary, modifier = Modifier.size(20.dp))
+                Icon(icon, null, tint = PhantasiaColors.Primary, modifier = Modifier.size(24.dp))
             }
         },
         trailingContent   = {
             Box {
                 IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Default.ArrowDropDown, null, tint = PhantasiaColors.OnDim)
+                    Icon(Icons.Default.ArrowDropDown, null, tint = PhantasiaColors.OnDim, modifier = Modifier.size(28.dp))
                 }
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false },
                     containerColor = PhantasiaColors.SurfaceHigh) {
                     options.forEach { opt ->
                         DropdownMenuItem(
                             text    = { Text(opt, color = PhantasiaColors.OnSurface,
-                                style = MaterialTheme.typography.bodyMedium) },
+                                style = MaterialTheme.typography.bodyLarge) },
                             onClick = { onSelect(opt); expanded = false },
                             leadingIcon = if (opt.contains(value.substringBefore(" "), ignoreCase = true)) ({
                                 Icon(Icons.Default.Check, null, tint = PhantasiaColors.Primary,
-                                    modifier = Modifier.size(16.dp))
+                                    modifier = Modifier.size(18.dp))
                             }) else null
                         )
                     }
@@ -486,21 +492,21 @@ fun SettingsSliderRow(
     value: Float, range: ClosedFloatingPointRange<Float>, steps: Int,
     onChange: (Float) -> Unit
 ) {
-    Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                .background(PhantasiaColors.Primary.copy(alpha = 0.15f)),
+            Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                .background(PhantasiaColors.Primary.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = PhantasiaColors.Primary, modifier = Modifier.size(20.dp))
+                Icon(icon, null, tint = PhantasiaColors.Primary, modifier = Modifier.size(24.dp))
             }
             Spacer(Modifier.width(14.dp))
             Text(title, color = PhantasiaColors.OnSurface,
-                style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
             Text(valueLabel, color = PhantasiaColors.Primary,
-                style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
         Slider(value = value, onValueChange = onChange, valueRange = range, steps = steps,
-            modifier = Modifier.padding(start = 50.dp),
+            modifier = Modifier.padding(start = 56.dp, top = 4.dp),
             colors = SliderDefaults.colors(thumbColor = PhantasiaColors.Primary,
                 activeTrackColor = PhantasiaColors.Primary,
                 inactiveTrackColor = PhantasiaColors.Primary.copy(alpha = 0.25f)))
@@ -510,19 +516,19 @@ fun SettingsSliderRow(
 @Composable
 fun SettingsNavRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
     ListItem(
-        headlineContent   = { Text(title, color = PhantasiaColors.OnSurface) },
+        headlineContent   = { Text(title, color = PhantasiaColors.OnSurface, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium) },
         supportingContent = { Text(subtitle, color = PhantasiaColors.OnDim,
-            style = MaterialTheme.typography.bodySmall) },
+            style = MaterialTheme.typography.bodyMedium) },
         leadingContent    = {
-            Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                .background(PhantasiaColors.Primary.copy(alpha = 0.15f)),
+            Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                .background(PhantasiaColors.Primary.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = PhantasiaColors.Primary, modifier = Modifier.size(20.dp))
+                Icon(icon, null, tint = PhantasiaColors.Primary, modifier = Modifier.size(24.dp))
             }
         },
         trailingContent   = {
             Icon(Icons.Default.ChevronRight, null, tint = PhantasiaColors.OnDim,
-                modifier = Modifier.size(20.dp))
+                modifier = Modifier.size(24.dp))
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.clickable { onClick() }
@@ -532,14 +538,14 @@ fun SettingsNavRow(icon: ImageVector, title: String, subtitle: String, onClick: 
 @Composable
 fun SettingsActionRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
     ListItem(
-        headlineContent   = { Text(title, color = PhantasiaColors.Error) },
+        headlineContent   = { Text(title, color = PhantasiaColors.Error, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium) },
         supportingContent = { Text(subtitle, color = PhantasiaColors.OnDim,
-            style = MaterialTheme.typography.bodySmall) },
+            style = MaterialTheme.typography.bodyMedium) },
         leadingContent    = {
-            Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                .background(PhantasiaColors.Error.copy(alpha = 0.15f)),
+            Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                .background(PhantasiaColors.Error.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = PhantasiaColors.Error, modifier = Modifier.size(20.dp))
+                Icon(icon, null, tint = PhantasiaColors.Error, modifier = Modifier.size(24.dp))
             }
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),

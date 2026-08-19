@@ -27,15 +27,24 @@ class CipherEngine @Inject constructor(private val http: HttpClient) {
 
     suspend fun resolveStreamUrl(rawUrl: String, playerUrl: String): String {
         var url = rawUrl
-        Regex("[?&]n=([^&]+)").find(url)?.let {
-            val raw = it.groupValues[1]
-            val dec = decryptN(raw, playerUrl)
-            if (dec != raw) url = url.replace("n=$raw", "n=$dec")
+        if (url.isBlank()) return url
+        if (url.contains("&sig=") || url.contains("?sig=") || url.contains("&signature=") || url.contains("?signature=")) {
+            return url
         }
         Regex("[?&]s=([^&]+)").find(url)?.let {
             val raw = it.groupValues[1]
             val dec = decryptSig(raw, playerUrl)
-            url = url.replace("s=$raw", "").trimEnd('&', '?') + "&sig=$dec"
+            if (dec.isNotBlank()) {
+                url = if (url.contains("?s=")) url.replace("?s=$raw", "?sig=$dec")
+                      else url.replace("&s=$raw", "&sig=$dec")
+            }
+        }
+        Regex("[?&]n=([^&]+)").find(url)?.let {
+            val raw = it.groupValues[1]
+            val dec = decryptN(raw, playerUrl)
+            if (dec != raw && dec.isNotBlank()) {
+                url = url.replace("n=$raw", "n=$dec")
+            }
         }
         return url
     }

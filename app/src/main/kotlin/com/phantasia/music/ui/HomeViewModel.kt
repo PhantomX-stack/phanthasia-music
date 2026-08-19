@@ -18,6 +18,9 @@ data class HomeUiState(
     val homeSections:   List<HomeSection> = emptyList(),
     val quickPicks:     List<TrackModel>  = emptyList(),
     val recentlyPlayed: List<TrackModel>  = emptyList(),
+    val selectedGenre:  String            = "All",
+    val genreTracks:    List<TrackModel>  = emptyList(),
+    val isGenreLoading: Boolean           = false,
     val error:          String?           = null
 )
 
@@ -53,6 +56,23 @@ class HomeViewModel @Inject constructor(
             }.onFailure { e ->
                 _state.update { it.copy(isLoading = false,
                     error = "Could not load recommendations: ${e.message}") }
+            }
+        }
+    }
+
+    fun selectGenre(genre: String) {
+        if (_state.value.selectedGenre == genre) return
+        _state.update { it.copy(selectedGenre = genre) }
+        if (genre == "All") {
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update { it.copy(isGenreLoading = true) }
+            runCatching {
+                val tracks = repo.getGenreTracks(genre)
+                _state.update { it.copy(genreTracks = tracks, isGenreLoading = false) }
+            }.onFailure {
+                _state.update { it.copy(isGenreLoading = false) }
             }
         }
     }
