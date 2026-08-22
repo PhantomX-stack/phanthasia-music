@@ -110,6 +110,14 @@ fun MiniPlayerBar(
                 .clickable { onClick() }
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
+                // Progress line running along the very top edge
+                PhantasiaProgressBar(
+                    style = ProgressBarStyle.GLOW_LINEAR,
+                    positionMs = state.positionMs,
+                    durationMs = state.durationMs,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 // Top drag hint pill
                 Box(
                     modifier = Modifier

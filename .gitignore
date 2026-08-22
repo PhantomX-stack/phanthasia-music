@@ -16,12 +16,18 @@ local.properties
 # Local environment files and secrets
 .env
 .env.*
+.env/
+env/
+venv/
+.venv/
 !.env.example
 secrets.properties
 secret.properties
 credentials.properties
 keystore.properties
 signing.properties
+*.token
+*.secret
 
 # Signing keys and certificates
 *.jks

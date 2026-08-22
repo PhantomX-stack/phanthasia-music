@@ -46,8 +46,10 @@ import com.phantasia.music.player.RepeatMode
 @Composable
 fun PlayerScreen(videoId: String, nav: NavController) {
     val vm: PlayerViewModel = hiltViewModel()
+    val settingsVm: SettingsViewModel = hiltViewModel()
     val state by vm.uiState.collectAsState()
     val queueState by vm.queueState.collectAsState()
+    val settings by settingsVm.state.collectAsState()
 
     LaunchedEffect(videoId) {
         val currState = state
@@ -84,6 +86,7 @@ fun PlayerScreen(videoId: String, nav: NavController) {
             is PlayerUiState.Playing -> PlayerUI(
                 state = s,
                 queueState = queueState,
+                settings = settings,
                 onEvent = vm::onEvent,
                 nav = nav
             )
@@ -97,6 +100,7 @@ fun PlayerScreen(videoId: String, nav: NavController) {
 private fun PlayerUI(
     state:      PlayerUiState.Playing,
     queueState: QueueState,
+    settings:   SettingsState,
     onEvent:    (PlayerUiEvent) -> Unit,
     nav:        NavController
 ) {
@@ -266,14 +270,15 @@ private fun PlayerUI(
                                             ViewGroup.LayoutParams.MATCH_PARENT,
                                             ViewGroup.LayoutParams.MATCH_PARENT
                                         )
-                                        settings.javaScriptEnabled = true
-                                        settings.domStorageEnabled = true
-                                        settings.databaseEnabled = true
-                                        settings.mediaPlaybackRequiresUserGesture = false
-                                        settings.loadWithOverviewMode = true
-                                        settings.useWideViewPort = true
-                                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                                        settings.userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
+                                        val webSettings = this.settings
+                                        webSettings.javaScriptEnabled = true
+                                        webSettings.domStorageEnabled = true
+                                        webSettings.databaseEnabled = true
+                                        webSettings.mediaPlaybackRequiresUserGesture = false
+                                        webSettings.loadWithOverviewMode = true
+                                        webSettings.useWideViewPort = true
+                                        webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                                        webSettings.userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
                                         webViewClient = object : WebViewClient() {
                                             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
                                         }
@@ -378,18 +383,30 @@ private fun PlayerUI(
 
                 Spacer(Modifier.height(16.dp))
 
-                // ── Progress Bar Slider (Bigger track & thumb) ────────────
-                Slider(
-                    value = state.positionMs.toFloat(),
-                    onValueChange = { onEvent(PlayerUiEvent.Seek(it.toLong())) },
-                    valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
-                        activeTrackColor = PhantasiaColors.Primary,
-                        inactiveTrackColor = Color.White.copy(alpha = 0.25f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // ── Progress Bar (PhantasiaProgressBar with transparent touch Slider) ──
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PhantasiaProgressBar(
+                        style = settings.progressBarStyle,
+                        positionMs = state.positionMs,
+                        durationMs = state.durationMs,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Slider(
+                        value = state.positionMs.toFloat(),
+                        onValueChange = { onEvent(PlayerUiEvent.Seek(it.toLong())) },
+                        valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color.Transparent,
+                            activeTrackColor = Color.Transparent,
+                            inactiveTrackColor = Color.Transparent
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween

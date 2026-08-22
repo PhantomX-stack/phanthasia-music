@@ -1,6 +1,5 @@
 package com.phantasia.music.accounts
 
-import com.phantasia.music.BuildConfig
 import com.phantasia.music.network.MusicRepository
 import com.phantasia.music.network.SearchResultModel
 import com.phantasia.music.storage.*
@@ -37,9 +36,8 @@ class SpotifyImporter @Inject constructor(
     private val playlistDao: PlaylistDao
 ) {
     companion object {
-        const val CLIENT_ID = BuildConfig.SPOTIFY_CLIENT_ID
+        const val CLIENT_ID = "YOUR_SPOTIFY_CLIENT_ID"
         const val REDIRECT_URI = "phantasia://spotify-callback"
-        const val SCOPES = "playlist-read-private user-library-read"
     }
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
@@ -64,11 +62,41 @@ class SpotifyImporter @Inject constructor(
         }
     }
 
+    suspend fun exchangeSpDcForAccessToken(spDc: String): String? = runCatching {
+        val response = client.get("https://open.spotify.com/get_access_token?reason=transport&productType=web_player") {
+            header("Cookie", "sp_dc=$spDc")
+            header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        }.bodyAsText()
+        json.parseToJsonElement(response).jsonObject["accessToken"]?.jsonPrimitive?.contentOrNull
+    }.getOrNull()
+
+    suspend fun fetchPublicSpotifyPlaylist(playlistId: String): List<Pair<String, String>> = runCatching {
+        val html = client.get("https://open.spotify.com/embed/playlist/$playlistId") {
+            header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        }.bodyAsText()
+        val jsonMatch = Regex("""<script id="__NEXT_DATA__"[^>]*>(.+?)</script>""", RegexOption.DOT_MATCHES_ALL)
+            .find(html) ?: return@runCatching emptyList()
+        val root = json.parseToJsonElement(jsonMatch.groupValues[1]).jsonObject
+        runCatching {
+            root["props"]?.jsonObject?.get("pageProps")?.jsonObject
+                ?.get("state")?.jsonObject?.get("data")?.jsonObject
+                ?.get("entity")?.jsonObject?.get("trackList")?.jsonArray
+                ?.mapNotNull { track ->
+                    val obj = track.jsonObject
+                    val title = obj["title"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                    val artist = obj["subtitle"]?.jsonPrimitive?.contentOrNull ?: ""
+                    title to artist
+                } ?: emptyList()
+        }.getOrDefault(emptyList())
+    }.getOrDefault(emptyList())
+
     suspend fun fetchSpotifyEmbedPlaylist(playlistId: String): Pair<String, List<SpotifyTrackItem>> = withContext(Dispatchers.IO) {
         val embedUrl = "https://open.spotify.com/embed/playlist/$playlistId"
-        val response = client.get(embedUrl) {
-            header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-        }.bodyAsText()
+        val response = runCatching {
+            client.get(embedUrl) {
+                header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+            }.bodyAsText()
+        }.getOrDefault("")
 
         var title = "Spotify Playlist"
         val tracks = mutableListOf<SpotifyTrackItem>()
@@ -96,38 +124,6 @@ class SpotifyImporter @Inject constructor(
             e.printStackTrace()
         }
 
-        // Fallback: If embed scraping yielded no tracks, try fetching anonymous token and querying Web API
-        if (tracks.isEmpty()) {
-            try {
-                val tokenResponse = client.get("https://open.spotify.com/get_access_token") {
-                    header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                }.bodyAsText()
-                val tokenObj = json.parseToJsonElement(tokenResponse).jsonObject
-                val accessToken = tokenObj["accessToken"]?.jsonPrimitive?.contentOrNull
-
-                if (!accessToken.isNullOrBlank()) {
-                    val apiRes = client.get("https://api.spotify.com/v1/playlists/$playlistId") {
-                        header("Authorization", "Bearer $accessToken")
-                    }.bodyAsText()
-                    val apiObj = json.parseToJsonElement(apiRes).jsonObject
-                    apiObj["name"]?.jsonPrimitive?.contentOrNull?.let { title = it }
-                    val items = apiObj["tracks"]?.jsonObject?.get("items")?.jsonArray
-                    items?.forEach { item ->
-                        val track = item.jsonObject["track"]?.jsonObject ?: return@forEach
-                        val tTitle = track["name"]?.jsonPrimitive?.contentOrNull ?: return@forEach
-                        val artists = track["artists"]?.jsonArray
-                            ?.mapNotNull { it.jsonObject["name"]?.jsonPrimitive?.contentOrNull }
-                            ?.joinToString(", ") ?: "Unknown"
-                        val albumName = track["album"]?.jsonObject?.get("name")?.jsonPrimitive?.contentOrNull ?: ""
-                        val dur = track["duration_ms"]?.jsonPrimitive?.longOrNull ?: 0L
-                        tracks.add(SpotifyTrackItem(title = tTitle, artist = artists, album = albumName, durationMs = dur))
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
         Pair(title, tracks)
     }
 
@@ -140,17 +136,23 @@ class SpotifyImporter @Inject constructor(
                 ?: throw IllegalArgumentException("Invalid Spotify playlist URL or ID")
 
             val (title, spotifyTracks) = fetchSpotifyEmbedPlaylist(playlistId)
-            if (spotifyTracks.isEmpty()) {
+            val trackPairs = if (spotifyTracks.isNotEmpty()) {
+                spotifyTracks.map { it.title to it.artist }
+            } else {
+                fetchPublicSpotifyPlaylist(playlistId)
+            }
+
+            if (trackPairs.isEmpty()) {
                 throw IllegalStateException("Could not extract tracks from Spotify playlist")
             }
 
-            val finalTitle = if (title.isBlank()) "Spotify - $playlistId" else title
+            val finalTitle = if (title.isBlank() || title == "Spotify Playlist") "Spotify - $playlistId" else title
             val localPlaylistId = playlistDao.create(PlaylistEntity(name = finalTitle))
 
             var matched = 0
-            spotifyTracks.forEachIndexed { index, track ->
-                onProgress(index + 1, spotifyTracks.size, "${track.title} - ${track.artist}")
-                val searchQuery = "${track.title} ${track.artist}".trim()
+            trackPairs.forEachIndexed { index, (songTitle, artistName) ->
+                onProgress(index + 1, trackPairs.size, "$songTitle - $artistName")
+                val searchQuery = "$songTitle $artistName".trim()
                 val results = repo.search(searchQuery)
                 val bestTrack = results.filterIsInstance<SearchResultModel.TrackResult>()
                     .firstOrNull()?.track
@@ -160,9 +162,9 @@ class SpotifyImporter @Inject constructor(
                         videoId = bestTrack.videoId,
                         title = bestTrack.title,
                         artistName = bestTrack.artistName,
-                        albumTitle = bestTrack.albumTitle.ifBlank { track.album },
+                        albumTitle = bestTrack.albumTitle,
                         artworkUrl = bestTrack.artworkUrl,
-                        durationSeconds = if (bestTrack.durationSeconds > 0) bestTrack.durationSeconds else track.durationMs / 1000
+                        durationSeconds = bestTrack.durationSeconds
                     )
                     songDao.upsert(song)
                     playlistDao.addSong(PlaylistSongCrossRef(localPlaylistId, bestTrack.videoId))
@@ -172,10 +174,21 @@ class SpotifyImporter @Inject constructor(
 
             SpotifyImportResult(
                 playlistName = finalTitle,
-                totalTracks = spotifyTracks.size,
+                totalTracks = trackPairs.size,
                 matchedTracks = matched,
                 playlistId = localPlaylistId
             )
+        }
+    }
+
+    suspend fun importLikedSongsFromSpDc(
+        spDc: String,
+        onProgress: (current: Int, total: Int, currentTrack: String) -> Unit = { _, _, _ -> }
+    ): Result<Int> = withContext(Dispatchers.IO) {
+        runCatching {
+            val token = exchangeSpDcForAccessToken(spDc)
+                ?: throw IllegalStateException("Failed to exchange sp_dc for Spotify Web access token")
+            importLikedSongsFromToken(token, onProgress).getOrThrow()
         }
     }
 

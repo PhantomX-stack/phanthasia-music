@@ -155,10 +155,15 @@ fun SettingsScreen(nav: NavController) {
             }
 
             // ── PLAYER UI ──────────────────────────────────────────────────────
-            if (show("player", "background", "lyrics", "notification", "thumbnail")) {
+            if (show("player", "background", "lyrics", "notification", "thumbnail", "progress", "bar")) {
                 item { SettingsSectionHeader("Player") }
                 item {
                     SettingsCard {
+                        SettingsDropdownRow(Icons.Default.LinearScale, "Progress bar style",
+                            s.progressBarStyle.label, ProgressBarStyle.values().map { it.label }) { label ->
+                            ProgressBarStyle.values().find { it.label == label }?.let { vm.setProgressBarStyle(it) }
+                        }
+                        SettingsDivider()
                         // Background style with visual chips
                         Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -393,7 +398,7 @@ private fun SettingsAccountCard(
 @Composable
 fun SettingsSectionHeader(title: String) {
     Text(title.uppercase(), style = MaterialTheme.typography.labelSmall,
-        color = PhantasiaColors.Primary, fontWeight = FontWeight.SemiBold,
+        color = PhantasiaColors.Secondary, fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 6.dp))
 }
 

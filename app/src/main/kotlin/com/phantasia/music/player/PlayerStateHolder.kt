@@ -1,6 +1,7 @@
 package com.phantasia.music.player
 
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.phantasia.music.network.TrackModel
@@ -67,7 +68,24 @@ class PlayerStateHolder @Inject constructor(private val player: ExoPlayer) {
     }
 
     fun playStream(track: TrackModel, url: String, shuffle: Boolean = false, repeat: RepeatMode = RepeatMode.NONE) {
-        player.setMediaItem(MediaItem.fromUri(url))
+        val uri = android.net.Uri.parse(url)
+        val artworkUri = if (track.artworkUrl.isNotBlank()) android.net.Uri.parse(track.artworkUrl) else null
+        val item = MediaItem.Builder()
+            .setUri(uri)
+            .setMediaId(track.videoId)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(track.title)
+                    .setArtist(track.artistName)
+                    .setAlbumTitle(track.albumTitle)
+                    .apply {
+                        if (artworkUri != null) setArtworkUri(artworkUri)
+                    }
+                    .build()
+            )
+            .build()
+        player.stop()
+        player.setMediaItem(item)
         player.prepare()
         player.playWhenReady = true
         player.play()

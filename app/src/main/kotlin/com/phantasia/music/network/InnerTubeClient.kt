@@ -38,16 +38,38 @@ internal object IT {
 data class InnerTubeLocale(val gl: String = "US", val hl: String = "en")
 
 enum class ClientType {
+    ANDROID_VR,
     ANDROID_MUSIC,
     ANDROID,
     WEB_REMIX,
     IOS,
     ANDROID_TESTSUITE,
-    TVHTML5_SIMPLY_EMBEDDED
+    TVHTML5_SIMPLY_EMBEDDED,
+    WEB_EMBEDDED
 }
 
 fun buildContext(l: InnerTubeLocale, type: ClientType = ClientType.ANDROID_MUSIC): MutableMap<String, Any> {
     val clientMap = when (type) {
+        ClientType.ANDROID_VR -> mapOf(
+            "clientName" to "ANDROID_VR",
+            "clientVersion" to "1.60.19",
+            "deviceModel" to "Quest 3",
+            "androidSdkVersion" to 32,
+            "hl" to l.hl,
+            "gl" to l.gl,
+            "userAgent" to "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
+            "timeZone" to "UTC",
+            "utcOffsetMinutes" to 0
+        )
+        ClientType.WEB_EMBEDDED -> mapOf(
+            "clientName" to "WEB_EMBEDDED_PLAYER",
+            "clientVersion" to "1.20240101.01.00",
+            "hl" to l.hl,
+            "gl" to l.gl,
+            "userAgent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+            "timeZone" to "UTC",
+            "utcOffsetMinutes" to 0
+        )
         ClientType.ANDROID_MUSIC -> mapOf(
             "clientName" to "ANDROID_MUSIC",
             "clientVersion" to "6.45.52",
@@ -145,7 +167,7 @@ object NetworkModule {
             }.build()
 
     @Provides @Singleton
-    fun provideKtor(@InnerTubeHttp ok: OkHttpClient): HttpClient =
+    fun provideDefaultKtor(@InnerTubeHttp ok: OkHttpClient): HttpClient =
         HttpClient(OkHttp) {
             engine { preconfigured = ok }
             install(ContentNegotiation) {
@@ -159,4 +181,7 @@ object NetworkModule {
             install(Logging) { level = LogLevel.NONE }
             defaultRequest { contentType(ContentType.Application.Json) }
         }
+
+    @InnerTubeHttp @Provides @Singleton
+    fun provideInnerTubeKtor(defaultClient: HttpClient): HttpClient = defaultClient
 }

@@ -7,103 +7,109 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
-sealed interface CipherOp {
-    object Reverse                : CipherOp
-    data class Splice(val n: Int) : CipherOp
-    data class Swap(val b: Int)   : CipherOp
-}
-
-/**
- * Decrypts YouTube/InnerTube stream URLs.
- * n-param  : removes bandwidth throttling
- * s-param  : decodes AES signature cipher from base.js
- * All results cached in-memory by player JS version.
- */
 @Singleton
-class CipherEngine @Inject constructor(private val http: HttpClient) {
-
-    private val opsCache = ConcurrentHashMap<String, List<CipherOp>>()
-    private val nCache   = ConcurrentHashMap<String, String>()
+class CipherEngine @Inject constructor(
+    @InnerTubeHttp private val http: HttpClient,
+    private val jsRuntime: InnerTubeJsRuntime
+) {
+    private val playerJsCache = ConcurrentHashMap<String, String>()
+    private val sigFunctionCache = ConcurrentHashMap<String, String>()
+    private val nFunctionCache = ConcurrentHashMap<String, String>()
 
     suspend fun resolveStreamUrl(rawUrl: String, playerUrl: String): String {
+        if (rawUrl.isBlank()) return rawUrl
         var url = rawUrl
-        if (url.isBlank()) return url
-        if (url.contains("&sig=") || url.contains("?sig=") || url.contains("&signature=") || url.contains("?signature=")) {
-            return url
-        }
-        Regex("[?&]s=([^&]+)").find(url)?.let {
-            val raw = it.groupValues[1]
-            val dec = decryptSig(raw, playerUrl)
-            if (dec.isNotBlank()) {
-                url = if (url.contains("?s=")) url.replace("?s=$raw", "?sig=$dec")
-                      else url.replace("&s=$raw", "&sig=$dec")
-            }
-        }
-        Regex("[?&]n=([^&]+)").find(url)?.let {
-            val raw = it.groupValues[1]
-            val dec = decryptN(raw, playerUrl)
-            if (dec != raw && dec.isNotBlank()) {
-                url = url.replace("n=$raw", "n=$dec")
-            }
-        }
+        url = applyNParam(url, playerUrl)
+        url = applySParam(url, playerUrl)
         return url
     }
 
-    private suspend fun decryptSig(sig: String, playerUrl: String): String {
-        if (sig.isBlank()) return sig
-        val ops = opsCache.getOrPut(playerUrl) {
-            runCatching { parseOps(http.get(playerUrl).bodyAsText()) }.getOrDefault(emptyList())
+    private suspend fun applyNParam(url: String, playerUrl: String): String {
+        val match = Regex("[?&]n=([^&]+)").find(url) ?: return url
+        val raw = match.groupValues[1]
+        val fnSource = nFunctionCache.getOrPut(playerUrl) {
+            runCatching {
+                val js = fetchJs(playerUrl)
+                val name = findNFunctionName(js) ?: error("n-function name not found")
+                extractFunctionSource(js, name) ?: error("n-function source not found")
+            }.getOrDefault("")
         }
-        return applyOps(sig, ops)
+        if (fnSource.isBlank()) return url
+        val decoded = runCatching { jsRuntime.runDecipher(fnSource, raw) }.getOrDefault(raw)
+        return if (decoded.isNotBlank() && decoded != raw) url.replace("n=$raw", "n=$decoded") else url
     }
 
-    private suspend fun decryptN(n: String, playerUrl: String): String {
-        if (n.isBlank()) return n
-        return nCache.getOrPut("$playerUrl::$n") {
-            runCatching { extractN(http.get(playerUrl).bodyAsText(), n) }.getOrDefault(n)
+    private suspend fun applySParam(url: String, playerUrl: String): String {
+        val match = Regex("[?&]s=([^&]+)").find(url) ?: return url
+        val raw = match.groupValues[1]
+        val fnSource = sigFunctionCache.getOrPut(playerUrl) {
+            runCatching {
+                val js = fetchJs(playerUrl)
+                val name = findSigFunctionName(js) ?: error("sig-function name not found")
+                extractFunctionSource(js, name) ?: error("sig-function source not found")
+            }.getOrDefault("")
         }
+        if (fnSource.isBlank()) return url
+        val decoded = runCatching { jsRuntime.runDecipher(fnSource, raw) }.getOrDefault("")
+        return if (decoded.isNotBlank()) {
+            url.replace("s=$raw", "").trimEnd('&', '?') + "&sig=$decoded"
+        } else url
     }
 
-    private fun parseOps(js: String): List<CipherOp> {
-        val ops  = mutableListOf<CipherOp>()
-        val id   = "[a-zA-Z_][a-zA-Z0-9_]*"
-        val body = Regex("$id=function[(]a[)][{]a=a[.]split[(][)][)](.+?)return a[.]join[(][)][)][}]")
-                       .find(js)?.groupValues?.getOrNull(1) ?: return ops
-        val hName = Regex(";($id)[.]")
-                        .find(body)?.groupValues?.getOrNull(1) ?: return ops
-        val esc   = Regex.escapeReplacement(hName)
-        val hBody = Regex("var $esc=[{](.+?)[}];", RegexOption.DOT_MATCHES_ALL)
-                        .find(js)?.groupValues?.getOrNull(1) ?: return ops
-        val revF = Regex("($id):function[(]a[)][{]a[.]reverse[(][)]").find(hBody)?.groupValues?.getOrNull(1)
-        val splF = Regex("($id):function[(]a,b[)][{]a[.]splice[(]0").find(hBody)?.groupValues?.getOrNull(1)
-        val swpF = Regex("($id):function[(]a,b[)][{]var c=a").find(hBody)?.groupValues?.getOrNull(1)
-        Regex("$esc[.]($id)[(]a,([0-9]+)[)]").findAll(body).forEach { c ->
-            val m = c.groupValues[1]; val n = c.groupValues[2].toIntOrNull() ?: return@forEach
-            when (m) { revF->ops.add(CipherOp.Reverse); splF->ops.add(CipherOp.Splice(n)); swpF->ops.add(CipherOp.Swap(n)) }
-        }
-        return ops
-    }
+    private suspend fun fetchJs(playerUrl: String): String =
+        playerJsCache.getOrPut(playerUrl) { http.get(playerUrl).bodyAsText() }
 
-    private fun applyOps(sig: String, ops: List<CipherOp>): String {
-        val c = sig.toMutableList()
-        for (op in ops) when (op) {
-            is CipherOp.Reverse -> c.reverse()
-            is CipherOp.Splice  -> repeat(op.n.coerceAtMost(c.size)) { c.removeAt(0) }
-            is CipherOp.Swap    -> if (c.size > 1) { val i=op.b%c.size; val t=c[0]; c[0]=c[i]; c[i]=t }
-        }
-        return c.joinToString("")
-    }
+    // ── Finding the (renamed-every-few-weeks) function names ──────────────
+    // Several fallback patterns tried in order — YouTube rotates between a
+    // handful of call-site shapes over time. This part needs occasional
+    // maintenance as YouTube changes their code; the DECIPHER LOGIC never
+    // does, since we execute their real function instead of re-deriving it.
 
-    private fun extractN(js: String, n: String): String = try {
-        val id   = "[a-zA-Z_][a-zA-Z0-9_]*"
-        val name = Regex("[.]get[(]\"n\"[)][)]&&[(]b=($id)[([][)]")
-                       .find(js)?.groupValues?.getOrNull(1) ?: return n
-        val esc  = Regex.escapeReplacement(name)
-        val bodyRx = Regex(
-            """$esc\s*=\s*function\s*\(a\)\s*\{(.+?);\s*return\s+b\.join\(\)\)\s*\}""",
-            RegexOption.DOT_MATCHES_ALL,
+    private fun findNFunctionName(js: String): String? {
+        val patterns = listOf(
+            Regex("""\.get\("n"\)\)&&\(b=([a-zA-Z0-9${'$'}_]+)(?:\[\d+\])?\("""),
+            Regex("""[a-zA-Z0-9${'$'}_]+\.set\("n",([a-zA-Z0-9${'$'}_]+)\("""),
+            Regex(""";([a-zA-Z0-9${'$'}_]{2,4})=function\(a\)\{var b=a\.split\(""\)""")
         )
-        val funcBody = bodyRx.find(js)?.groupValues?.getOrNull(1)
-        if (funcBody.isNullOrBlank()) n else n
-    } catch (_: Exception) { n }
+        for (p in patterns) p.find(js)?.let { return it.groupValues[1] }
+        return null
+    }
+
+    private fun findSigFunctionName(js: String): String? {
+        val patterns = listOf(
+            Regex("""\bsig\s*=\s*([a-zA-Z0-9${'$'}_]+)\("""),
+            Regex("""["']signature["']\s*,\s*([a-zA-Z0-9${'$'}_]+)\(""")
+        )
+        for (p in patterns) p.find(js)?.let { return it.groupValues[1] }
+        return null
+    }
+
+    /**
+     * Extracts the COMPLETE function text (declaration through matching
+     * closing brace), correctly handling nested { } inside the body —
+     * plain regex alone breaks on nested braces, this walks and counts.
+     */
+    private fun extractFunctionSource(js: String, functionName: String): String? {
+        val escapedName = Regex.escape(functionName)
+        val startPattern = Regex("(?:function\\s+$escapedName\\s*\\(|$escapedName\\s*=\\s*function\\s*\\()")
+        val match = startPattern.find(js) ?: return null
+
+        var i = match.range.last
+        while (i < js.length && js[i] != '{') i++
+        if (i >= js.length) return null
+
+        var depth = 0
+        var end = i
+        while (end < js.length) {
+            when (js[end]) {
+                '{' -> depth++
+                '}' -> {
+                    depth--
+                    if (depth == 0) return js.substring(match.range.first, end + 1)
+                }
+            }
+            end++
+        }
+        return null
+    }
 }

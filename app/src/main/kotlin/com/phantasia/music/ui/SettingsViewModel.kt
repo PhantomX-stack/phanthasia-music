@@ -30,6 +30,7 @@ class SettingsViewModel @Inject constructor(
         autoPlayRelated    = prefs.getBoolean("auto_play_related",   true),
         continueOnError    = prefs.getBoolean("continue_on_error",   true),
         persistQueue       = prefs.getBoolean("persist_queue",       true),
+        progressBarStyle   = ProgressBarStyle.values().find { it.name == prefs.getString("progress_bar_style") } ?: ProgressBarStyle.GLOW_LINEAR,
         playerBackground   = PlayerBackground.values().find { it.name == prefs.getString("player_bg") }     ?: PlayerBackground.GRADIENT,
         showLyricsByDefault= prefs.getBoolean("show_lyrics_default", false),
         lyricsPosition     = LyricsPosition.values().find { it.name == prefs.getString("lyrics_position") } ?: LyricsPosition.BOTTOM,
@@ -59,6 +60,7 @@ class SettingsViewModel @Inject constructor(
     fun setPersistQueue(v: Boolean)            { save { copy(persistQueue = v) };       prefs.putBoolean("persist_queue", v) }
 
     // Player UI
+    fun setProgressBarStyle(v: ProgressBarStyle) { save { copy(progressBarStyle = v) }; prefs.putString("progress_bar_style", v.name) }
     fun setPlayerBackground(v: PlayerBackground) { save { copy(playerBackground = v) };  prefs.putString("player_bg", v.name) }
     fun setShowLyricsByDefault(v: Boolean)     { save { copy(showLyricsByDefault = v) };prefs.putBoolean("show_lyrics_default", v) }
     fun setLyricsPosition(v: LyricsPosition)   { save { copy(lyricsPosition = v) };     prefs.putString("lyrics_position", v.name) }

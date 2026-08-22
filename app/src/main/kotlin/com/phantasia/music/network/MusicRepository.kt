@@ -38,14 +38,30 @@ interface MusicRepository {
 
 @Singleton
 class MusicRepositoryImpl @Inject constructor(
-    private val http:   HttpClient,
+    @InnerTubeHttp private val http: HttpClient,
     private val req:    InnerTubeRequests,
     private val sParse: SearchParser,
     private val pParse: PlayerParser,
     private val aParse: AlbumParser,
-    private val cipher: CipherEngine
+    private val cipher: CipherEngine,
+    private val visitorSessionManager: VisitorSessionManager
 ) : MusicRepository {
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
+
+    private suspend fun <T> withRetry(
+        maxAttempts: Int = 3,
+        initialDelayMs: Long = 500,
+        block: suspend () -> T
+    ): T? {
+        var delayMs = initialDelayMs
+        repeat(maxAttempts) {
+            val result = runCatching { block() }
+            if (result.isSuccess) return result.getOrNull()
+            kotlinx.coroutines.delay(delayMs)
+            delayMs *= 2
+        }
+        return null
+    }
 
     override suspend fun getHomeSections(): List<HomeSection> = coroutineScope {
         val sections = mutableListOf<HomeSection>()
@@ -280,12 +296,36 @@ class MusicRepositoryImpl @Inject constructor(
         return if (items.isNotEmpty()) HomeSection(title, items.distinctBy { it.videoId }) else null
     }
 
-    override suspend fun search(query: String, filter: String?): List<SearchResultModel> = runCatching {
-        sParse.parse(json.parseToJsonElement(req.search(query, filter).bodyAsText()))
-    }.getOrDefault(emptyList())
+    override suspend fun search(query: String, filter: String?): List<SearchResultModel> =
+        withRetry {
+            sParse.parse(json.parseToJsonElement(req.search(query, filter).bodyAsText()))
+        } ?: emptyList()
 
     override suspend fun getStream(videoId: String): StreamDataModel? {
-        // Strategy 1: ANDROID_TESTSUITE client (direct unthrottled audio streams)
+        val stream = withRetry {
+            fetchStreamInternal(videoId)
+        }
+        if (stream == null) {
+            visitorSessionManager.invalidate()
+        }
+        return stream
+    }
+
+    private suspend fun fetchStreamInternal(videoId: String): StreamDataModel? {
+        // Strategy 1: ANDROID_VR client (modern client providing unthrottled and direct audio formats)
+        try {
+            val rVr = req.player(videoId, ClientType.ANDROID_VR).bodyAsText()
+            val rootVr = json.parseToJsonElement(rVr)
+            val streamVr = pParse.parse(videoId, rootVr)
+            if (streamVr != null && streamVr.streamUrl.isNotBlank()) {
+                val resolved = cipher.resolveStreamUrl(streamVr.streamUrl, IT.PLAYER)
+                if (resolved.isNotBlank()) {
+                    return streamVr.copy(streamUrl = resolved)
+                }
+            }
+        } catch (_: Exception) {}
+
+        // Strategy 2: ANDROID_TESTSUITE client (direct unthrottled audio streams)
         try {
             val r0 = req.player(videoId, ClientType.ANDROID_TESTSUITE).bodyAsText()
             val root0 = json.parseToJsonElement(r0)
@@ -298,7 +338,7 @@ class MusicRepositoryImpl @Inject constructor(
             }
         } catch (_: Exception) {}
 
-        // Strategy 2: IOS client (returns direct m4a/aac audio streams)
+        // Strategy 3: IOS client (returns direct m4a/aac audio streams)
         try {
             val r3 = req.player(videoId, ClientType.IOS).bodyAsText()
             val root3 = json.parseToJsonElement(r3)
@@ -307,6 +347,19 @@ class MusicRepositoryImpl @Inject constructor(
                 val resolved = cipher.resolveStreamUrl(stream3.streamUrl, IT.PLAYER)
                 if (resolved.isNotBlank()) {
                     return stream3.copy(streamUrl = resolved)
+                }
+            }
+        } catch (_: Exception) {}
+
+        // Strategy 4: WEB_EMBEDDED client
+        try {
+            val rWebEmb = req.player(videoId, ClientType.WEB_EMBEDDED).bodyAsText()
+            val rootWebEmb = json.parseToJsonElement(rWebEmb)
+            val streamWebEmb = pParse.parse(videoId, rootWebEmb)
+            if (streamWebEmb != null && streamWebEmb.streamUrl.isNotBlank()) {
+                val resolved = cipher.resolveStreamUrl(streamWebEmb.streamUrl, IT.PLAYER)
+                if (resolved.isNotBlank()) {
+                    return streamWebEmb.copy(streamUrl = resolved)
                 }
             }
         } catch (_: Exception) {}

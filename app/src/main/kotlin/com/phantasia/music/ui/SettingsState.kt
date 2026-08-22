@@ -55,6 +55,14 @@ enum class ContentCountry(val label: String, val code: String) {
     BR("Brazil",        "BR"),
 }
 
+enum class ProgressBarStyle(val label: String) {
+    GLOW_LINEAR("Glow"),
+    WAVEFORM("Waveform"),
+    NEO_CHUNKY("Chunky"),
+    LIQUID_GLASS("Liquid glass"),
+    DOT_TRAIL("Dot trail")
+}
+
 data class SettingsState(
     // Playback
     val audioQuality:         AudioQuality     = AudioQuality.AUTO,
@@ -66,6 +74,7 @@ data class SettingsState(
     val persistQueue:         Boolean          = true,
 
     // Player UI
+    val progressBarStyle:     ProgressBarStyle = ProgressBarStyle.GLOW_LINEAR,
     val playerBackground:     PlayerBackground = PlayerBackground.GRADIENT,
     val showLyricsByDefault:  Boolean          = false,
     val lyricsPosition:       LyricsPosition   = LyricsPosition.BOTTOM,

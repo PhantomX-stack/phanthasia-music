@@ -27,32 +27,29 @@ class StreamResolver @Inject constructor(private val repo: MusicRepository) {
 object PlayerModule {
     @androidx.annotation.OptIn(UnstableApi::class)
     @Provides @Singleton
-    fun provideCacheFactory(@ApplicationContext ctx: Context, cache: SimpleCache): CacheDataSource.Factory {
+    fun provideDefaultDataSourceFactory(@ApplicationContext ctx: Context): androidx.media3.datasource.DefaultDataSource.Factory {
         val httpFactory = DefaultHttpDataSource.Factory()
             .setUserAgent("Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36")
-            .setConnectTimeoutMs(15_000)
-            .setReadTimeoutMs(25_000)
+            .setConnectTimeoutMs(20_000)
+            .setReadTimeoutMs(30_000)
             .setAllowCrossProtocolRedirects(true)
             .setDefaultRequestProperties(mapOf(
                 "Referer" to "https://www.youtube.com/",
                 "Origin" to "https://www.youtube.com"
             ))
 
-        val defaultDataSourceFactory = androidx.media3.datasource.DefaultDataSource.Factory(ctx, httpFactory)
-
-        return CacheDataSource.Factory()
-            .setCache(cache)
-            .setUpstreamDataSourceFactory(defaultDataSourceFactory)
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR or CacheDataSource.FLAG_BLOCK_ON_CACHE)
+        return androidx.media3.datasource.DefaultDataSource.Factory(ctx, httpFactory)
     }
 
     @androidx.annotation.OptIn(UnstableApi::class)
     @Provides @Singleton
-    fun provideExoPlayer(@ApplicationContext ctx: Context, f: CacheDataSource.Factory): ExoPlayer {
+    fun provideExoPlayer(@ApplicationContext ctx: Context, dataSourceFactory: androidx.media3.datasource.DefaultDataSource.Factory): ExoPlayer {
         return ExoPlayer.Builder(ctx)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(f))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
             .setAudioAttributes(AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true)
-            .setHandleAudioBecomingNoisy(true).build()
+            .setHandleAudioBecomingNoisy(true)
+            .setWakeMode(C.WAKE_MODE_NETWORK)
+            .build()
     }
 }
